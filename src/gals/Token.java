@@ -32,5 +32,10 @@ public class Token
     public String toString()
     {
         return id+" ( "+lexeme+" ) @ "+position;
+    }
+
+    public Integer getTokenType() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getTokenType'");
     };
 }

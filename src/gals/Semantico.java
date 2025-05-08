@@ -35,15 +35,18 @@ public class Semantico implements Constants
   
               break;
               
-            case 3: //valida se a variavel já foi decladara
-              // Se já foi declarada, lança erro semântico
+            case 3: // Valida se a variável já foi declarada
               if (vars.containsKey(token.getLexeme())) {
                 throw new SemanticError("Variável já declarada");
               }
-              // Se não foi declarada, adiciona a variável ao mapa
-              vars.put(token.getLexeme(), token.getType());
+              // Cria uma nova entrada na tabela
+              InsereTabela entrada = new InsereTabela(token.getTokenType(), token.getLexeme());
+              vars.put(entrada.getNome(), entrada.getTipo());
               break;
-        }
+           
+            case 4: // valida o tipo da variável
+            
     }	
+  }
 
 }
