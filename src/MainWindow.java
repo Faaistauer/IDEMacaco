@@ -1,8 +1,5 @@
-/**
- *
- * @author eas
- */
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import gals.Lexico;
 import gals.Sintatico;
 import gals.Semantico;
@@ -11,7 +8,10 @@ import gals.SyntacticError;
 import gals.SemanticError;
 
 import java.awt.*;
-
+import java.io.FileReader;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
 public class MainWindow extends javax.swing.JFrame {
 
@@ -100,6 +100,10 @@ public class MainWindow extends javax.swing.JFrame {
 
         jScrollPane2.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         jScrollPane2.setPreferredSize(new Dimension(400, 300));
+        
+        // Inicialmente ocultar a tabela de símbolos
+        simbolosScrollPane.setVisible(false);
+        labelTabelaSimbolos.setVisible(false);
     }
 
     @SuppressWarnings("unchecked")
@@ -111,6 +115,12 @@ public class MainWindow extends javax.swing.JFrame {
         jScrollPane2 = new JScrollPane();
         console = new JTextArea();
         buttonCompile = new JButton();
+        
+        // Componentes para a tabela de símbolos
+        simbolosScrollPane = new JScrollPane();
+        tabelaSimbolos = new JTable();
+        labelTabelaSimbolos = new JLabel("Tabela de Símbolos");
+        
         jScrollPane2.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
 
         console.setEditable(false);
@@ -120,6 +130,17 @@ public class MainWindow extends javax.swing.JFrame {
         console.setTabSize(4);
         console.setBackground(Color.decode("#dd9830"));
         jScrollPane2.setViewportView(console);
+
+        // Configuração da tabela de símbolos
+        String[] colunas = {"Tipo", "Nome", "Iniciado", "Usado", "Escopo", "Parâmetro", 
+                            "Posição do Parâmetro", "Vetor", "Matriz", "Ref", "Função", "Procedimento"};
+        DefaultTableModel modeloTabela = new DefaultTableModel(colunas, 0);
+        tabelaSimbolos.setModel(modeloTabela);
+        tabelaSimbolos.setBackground(Color.decode("#f5deb3"));
+        simbolosScrollPane.setViewportView(tabelaSimbolos);
+        
+        labelTabelaSimbolos.setFont(new Font("Arial", Font.BOLD, 14));
+        labelTabelaSimbolos.setForeground(Color.WHITE);
 
         JLabel gifPlaceholder = new JLabel();
         gifPlaceholder.setBackground(Color.decode("#8B4513"));
@@ -209,43 +230,136 @@ public class MainWindow extends javax.swing.JFrame {
                         .addGroup(contentPaneLayout.createSequentialGroup()
                             .addComponent(jScrollPane2)
                             .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(sidePanel, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)))
+                            .addComponent(sidePanel, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE))
+                        .addGroup(contentPaneLayout.createSequentialGroup()
+                            .addGroup(contentPaneLayout.createParallelGroup()
+                                .addComponent(labelTabelaSimbolos)
+                                .addComponent(simbolosScrollPane, GroupLayout.DEFAULT_SIZE, 800, Short.MAX_VALUE))
+                            .addContainerGap()))
                     .addContainerGap())
         );
         contentPaneLayout.setVerticalGroup(
             contentPaneLayout.createParallelGroup()
                 .addGroup(contentPaneLayout.createSequentialGroup()
                     .addContainerGap()
-                    .addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 800, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
+                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(labelTabelaSimbolos)
+                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(simbolosScrollPane, GroupLayout.DEFAULT_SIZE, 200, Short.MAX_VALUE)
                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                     .addGroup(contentPaneLayout.createParallelGroup()
-                        .addComponent(jScrollPane2)
-                        .addComponent(sidePanel)))
+                        .addComponent(jScrollPane2, GroupLayout.PREFERRED_SIZE, 100, GroupLayout.PREFERRED_SIZE)
+                        .addComponent(sidePanel))
+                    .addContainerGap())
         );
         pack();
         setLocationRelativeTo(getOwner());
     }// </editor-fold>//GEN-END:initComponents
 
     private void buttonCompileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonCompileActionPerformed
-
         Lexico lex = new Lexico();
         Sintatico sint = new Sintatico();
         Semantico sem = new Semantico();
 
         lex.setInput(sourceInput.getText());
 
+        // Limpar console e mensagens anteriores
+        console.setText("");
 
-try {
-        sint.parse(lex, sem);
-        console.setText("Compilado com sucesso!");
-    } catch (LexicalError ex) {
-        console.setText("Erro Léxico: " + ex.getLocalizedMessage());
-    } catch (SyntacticError ex) {
-        console.setText("Erro Sintático: " + ex.getLocalizedMessage());
-    } catch (SemanticError ex) {
-        console.setText("Erro Semântico: " + ex.getLocalizedMessage());
+        try {
+            sint.parse(lex, sem);
+            console.setText("Compilado com sucesso!\n");
+            
+            // Exibir a tabela de símbolos após compilação bem sucedida
+            carregarTabelaSimbolos();
+            simbolosScrollPane.setVisible(true);
+            labelTabelaSimbolos.setVisible(true);
+            
+            // Redimensionar a janela para acomodar a tabela
+            setSize(1320, 800);
+            revalidate();
+            repaint();
+            
+        } catch (LexicalError ex) {
+            console.setText("Erro Léxico: " + ex.getLocalizedMessage());
+            // Ocultar a tabela em caso de erro
+            simbolosScrollPane.setVisible(false);
+            labelTabelaSimbolos.setVisible(false);
+        } catch (SyntacticError ex) {
+            console.setText("Erro Sintático: " + ex.getLocalizedMessage());
+            // Ocultar a tabela em caso de erro
+            simbolosScrollPane.setVisible(false);
+            labelTabelaSimbolos.setVisible(false);
+        } catch (SemanticError ex) {
+            console.setText("Erro Semântico: " + ex.getLocalizedMessage());
+            // Ocultar a tabela em caso de erro
+            simbolosScrollPane.setVisible(false);
+            labelTabelaSimbolos.setVisible(false);
+        }
     }
-}
+
+    private void carregarTabelaSimbolos() {
+        try {
+            // Limpar a tabela antes de carregar novos dados
+            DefaultTableModel modelo = (DefaultTableModel) tabelaSimbolos.getModel();
+            modelo.setRowCount(0);
+            
+            // Carregar dados do arquivo JSON
+            JSONParser parser = new JSONParser();
+            JSONArray simbolos = (JSONArray) parser.parse(new FileReader("simbolos.json"));
+            
+            for (Object obj : simbolos) {
+                JSONObject simbolo = (JSONObject) obj;
+                
+                String tipo = (String) simbolo.get("tipo");
+                String nome = (String) simbolo.get("nome");
+                boolean iniciado = (Boolean) simbolo.get("iniciado");
+                boolean usado = (Boolean) simbolo.get("usado");
+                long escopo = (Long) simbolo.get("escopo");
+                boolean parametro = (Boolean) simbolo.get("parametro");
+                long posicaoParametro = (Long) simbolo.get("pos_param");
+                boolean vetor = (Boolean) simbolo.get("vetor");
+                boolean matriz = (Boolean) simbolo.get("matriz");
+                boolean ref = (Boolean) simbolo.get("ref");
+                boolean funcao = (Boolean) simbolo.get("funcao");
+                boolean procedimento = (Boolean) simbolo.get("proc");
+                
+                // Adicionar avisos sobre variáveis não inicializadas
+                if (!iniciado && (!procedimento && !funcao)) {
+                    console.append("(Aviso) Variável '" + nome + "' não foi inicializada\n");
+                }
+                
+                // Adicionar avisos sobre variáveis não utilizadas
+                if (!usado) {
+                    console.append("(Aviso) Variável '" + nome + "' não está sendo usada\n");
+                }
+                
+                // Adicionar linha à tabela
+                Object[] linha = {
+                    tipo,
+                    nome,
+                    iniciado ? "true" : "false",
+                    usado ? "true" : "false",
+                    String.valueOf(escopo),
+                    parametro ? "true" : "false",
+                    String.valueOf(posicaoParametro),
+                    vetor ? "true" : "false",
+                    matriz ? "true" : "false",
+                    ref ? "true" : "false",
+                    funcao ? "true" : "false",
+                    procedimento ? "true" : "false"
+                };
+                
+                modelo.addRow(linha);
+            }
+            
+        } catch (Exception e) {
+            console.append("Erro ao carregar tabela de símbolos: " + e.getMessage() + "\n");
+            e.printStackTrace();
+        }
+    }
+    
     /**
      * @param args the command line arguments
      */
@@ -288,5 +402,9 @@ try {
     private JScrollPane jScrollPane2;
     private JTextArea console;
     private JButton buttonCompile;
+    // Componentes adicionados para a tabela de símbolos
+    private JScrollPane simbolosScrollPane;
+    private JTable tabelaSimbolos;
+    private JLabel labelTabelaSimbolos;
     // End of variables declaration//GEN-END:variables
 }

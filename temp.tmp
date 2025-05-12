@@ -1,0 +1,15 @@
+.data
+valor:0
+string:0
+teste:0
+
+.text
+JMP _main
+LDI 10
+STO 1000
+LD 1000 
+STO valor
+LD 1000 
+STO string
+LD valor
+STO 1000
