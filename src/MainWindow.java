@@ -136,7 +136,38 @@ public class MainWindow extends javax.swing.JFrame {
                             "Posição do Parâmetro", "Vetor", "Matriz", "Ref", "Função", "Procedimento"};
         DefaultTableModel modeloTabela = new DefaultTableModel(colunas, 0);
         tabelaSimbolos.setModel(modeloTabela);
-        tabelaSimbolos.setBackground(Color.decode("#f5deb3"));
+
+        // Personalização das cores e aparência da tabela
+        tabelaSimbolos.setBackground(Color.decode("#8B4513")); // Cor de fundo das células
+        tabelaSimbolos.setForeground(Color.BLACK); // Cor do texto
+        tabelaSimbolos.setGridColor(Color.decode("#8B4513")); // Cor das linhas da grade
+        tabelaSimbolos.setSelectionBackground(Color.decode("#8B4513")); // Cor de fundo da seleção
+        tabelaSimbolos.setSelectionForeground(Color.decode("#8B4513")); // Cor do texto da seleção
+
+        // Personalização do cabeçalho
+        tabelaSimbolos.getTableHeader().setBackground(Color.decode("#8B4513")); // Cor de fundo do cabeçalho
+        tabelaSimbolos.getTableHeader().setForeground(Color.WHITE); // Cor do texto do cabeçalho
+        tabelaSimbolos.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12)); // Fonte do cabeçalho
+
+        // Configuração da fonte das células
+        tabelaSimbolos.setFont(new Font("Arial", Font.PLAIN, 12));
+
+        // Configuração das linhas alternadas (zebra)
+        tabelaSimbolos.setDefaultRenderer(Object.class, new javax.swing.table.DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, 
+                    boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                
+                if (!isSelected) {
+                    c.setBackground(row % 2 == 0 ? Color.decode("#dd9830") : Color.decode("#e8b455"));
+                    c.setForeground(Color.BLACK);
+                }
+                
+                return c;
+            }
+        });
+
         simbolosScrollPane.setViewportView(tabelaSimbolos);
         
         labelTabelaSimbolos.setFont(new Font("Arial", Font.BOLD, 14));

@@ -522,15 +522,20 @@ public class Semantico {
 
             case 15:
                 // Operador *, / ou %
-                System.out.println(lista_simb_aux);
                 if (str.equals("*") || str.equals("/") || str.equals("%")) {
                     // Verifica tipos dos operandos para multiplicação/divisão/resto na pilha
                     if (pilha_tipos.size() >= 2) {
                         tipo2 = pilha_tipos.pop();
                         tipo1 = pilha_tipos.pop();
 
-
-                        tipoOp = str.equals("*") ? SemanticTable.MUL : SemanticTable.DIV;
+                        // Define o tipo de operação
+                        if (str.equals("*")) {
+                            tipoOp = SemanticTable.MUL;
+                        } else if (str.equals("/")) {
+                            tipoOp = SemanticTable.DIV;
+                        } else {
+                            tipoOp = SemanticTable.DIV; // % é tratado como divisão para fins de tipo
+                        }
 
                         resultado = SemanticTable.resultType(tipo1, tipo2, tipoOp);
 
@@ -539,11 +544,17 @@ public class Semantico {
                                     obterTipoString(tipo1) + " e " + obterTipoString(tipo2));
                         }
 
+                        // Verifica casos especiais para divisão
+                        if (tipoOp == SemanticTable.DIV) {
+                            // Divisão sempre resulta em float
+                            resultado = SemanticTable.FLO;
+                        }
+
                         // Coloca o tipo resultante de volta na pilha
                         pilha_tipos.push(resultado);
                     }
 
-                    // Verifica o operador e adiciona na pilha de operadores
+                    // Define o operador para geração de código
                     if (str.equals("*")) {
                         pilha_operador.push("MULTIPLICA");
                     } else if (str.equals("/")) {
@@ -555,7 +566,7 @@ public class Semantico {
                     throw new SemanticError("Operador inválido: " + str);
                 }
                 break;
-              
+
             case 20:
                 // geracao de codigo
                 if (!pilha_operador.isEmpty()) {
@@ -842,34 +853,48 @@ public class Semantico {
                 entrada_saida_dado = "";
                 break;
 
-            case 34:
-                pilha_operador.push("MAIOR");
-                operador_relacional = "MAIOR";
-                break;
-
-            case 35:
-                pilha_operador.push("MENOR");
-                operador_relacional = "MENOR";
-                break;
-
-            case 36:
-                pilha_operador.push("MAIOR_IGUAL");
-                operador_relacional = "MAIOR_IGUAL";
-                break;
-
-            case 37:
-                pilha_operador.push("MENOR_IGUAL");
-                operador_relacional = "MENOR_IGUAL";
-                break;
-
-            case 38:
-                pilha_operador.push("IGUAL");
-                operador_relacional = "IGUAL";
-                break;
-
-            case 39:
-                pilha_operador.push("DIFERENTE");
-                operador_relacional = "DIFERENTE";
+            case 34: case 35: case 36: case 37: case 38: case 39:
+                if (pilha_tipos.size() >= 2) {
+                    tipo2 = pilha_tipos.pop();
+                    tipo1 = pilha_tipos.pop();
+                    
+                    resultado = SemanticTable.resultType(tipo1, tipo2, SemanticTable.REL);
+                    
+                    if (resultado == SemanticTable.ERR) {
+                        throw new SemanticError("Comparação incompatível entre os tipos " +
+                                obterTipoString(tipo1) + " e " + obterTipoString(tipo2));
+                    }
+                    
+                    // O resultado de uma comparação é sempre booleano
+                    pilha_tipos.push(SemanticTable.BOO);
+                }
+                
+                switch (action) {
+                    case 34: 
+                        pilha_operador.push("MAIOR");
+                        operador_relacional = "MAIOR";
+                        break;
+                    case 35:
+                        pilha_operador.push("MENOR");
+                        operador_relacional = "MENOR";
+                        break;
+                    case 36:
+                        pilha_operador.push("MAIOR_IGUAL");
+                        operador_relacional = "MAIOR_IGUAL";
+                        break;
+                    case 37:
+                        pilha_operador.push("MENOR_IGUAL");
+                        operador_relacional = "MENOR_IGUAL";
+                        break;
+                    case 38:
+                        pilha_operador.push("IGUAL");
+                        operador_relacional = "IGUAL";
+                        break;
+                    case 39:
+                        pilha_operador.push("DIFERENTE");
+                        operador_relacional = "DIFERENTE";
+                        break;
+                }
                 break;
 
             case 40:
