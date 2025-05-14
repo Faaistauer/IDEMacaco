@@ -7,6 +7,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -158,12 +159,12 @@ public class Semantico {
     // Método para converter string de tipo para código de tipo
     private static int stringParaTipo(String tipoStr) {
         if (tipoStr == null) return ERR;
-        switch(tipoStr.toUpperCase()) {
+        switch(tipoStr.toLowerCase()) {
             case "macaque": return INT;
             case "chimp": return FLO;
             case "mico": return CHA;
             case "bugio": return STR;
-            case "BOOLEAN": return BOO;
+            case "golira": return BOO;
             default: return ERR;
         }
     }
@@ -171,12 +172,46 @@ public class Semantico {
     // Método para obter nome do tipo a partir do código
     private static String nomeTipo(int tipo) {
         switch(tipo) {
-            case INT: return "INT";
-            case FLO: return "FLOAT";
-            case CHA: return "CHAR";
-            case STR: return "STRING";
-            case BOO: return "BOOLEAN";
+            case INT: return "macaque";
+            case FLO: return "chimp";
+            case CHA: return "mico";
+            case STR: return "bugio";
+            case BOO: return "golira";
             default: return "DESCONHECIDO";
+        }
+    }
+
+    private static String verificaTipo(String valor) {
+        // Remove espaços em branco
+        valor = valor.trim();
+
+        // Verifica se é boolean
+        if (valor.equals("true") || valor.equals("false")) {
+            return "golira";  // boolean
+        }
+
+        // Verifica se é char (entre aspas simples)
+        if (valor.startsWith("'") && valor.endsWith("'") && valor.length() == 3) {
+            return "mico";    // char
+        }
+
+        // Verifica se é string (entre aspas duplas)
+        if (valor.startsWith("\"") && valor.endsWith("\"")) {
+            return "bugio";   // string
+        }
+
+        try {
+            // Verifica se é inteiro
+            Integer.parseInt(valor);
+            return "macaque"; // int
+        } catch (NumberFormatException e) {
+            try {
+                // Verifica se é float
+                Float.parseFloat(valor);
+                return "chimp";  // float
+            } catch (NumberFormatException e2) {
+                return "erro";   // tipo não reconhecido
+            }
         }
     }
 
@@ -322,16 +357,11 @@ public class Semantico {
                     for (Simbolo s : lista_simbolos) {
                         if (s.nome.equals(i.nome) && s.escopo == i.escopo) {
                             s.iniciado = true;
-
-                            if (s.vetor == true) {
-                                ponto_text += "\nSTO 1002";
-                                temp3 = true;
-                            }
                         }
                     }
                 }
 
-                inicio_atribuicao = false;
+//                inicio_atribuicao = false;
                 break;
 
             case 11:
@@ -461,8 +491,8 @@ public class Semantico {
 
             case 20:
                 // geracao de codigo
-                expr_type = INT;
-                pilha_tipos.push(expr_type);
+//                expr_type = INT;
+//                pilha_tipos.push(expr_type);
                 if (!pilha_operador.isEmpty()) {
                     operador = pilha_operador.peek();
                 } else {
@@ -470,120 +500,384 @@ public class Semantico {
                 }
 
                 if (operador.equals("") || (operador.equals("") && calculando_indice == true)) {
-                    if (escrever_text) {
-                        ponto_text += "\nLDI " + str;
+                    if(inicio_atribuicao){
+                        Simbolo ultimoSimbolo = lista_simbolos.get(lista_simbolos.size() - 1);
+                        String tipoUltimoSimbolo = ultimoSimbolo.tipo;
 
-                        if (temp1 == false && calculando_indice == false) {
-                            ponto_text += "\nSTO 1000";
-                            temp1 = true;
-                        }
-                        entrando_no_indice = false;
-                    }
-                    if (!chamada_nome.equals("")) {
-                        ponto_text += "\nLDI " + str;
-
-                        flag = false;
-
-                        for (Simbolo s : lista_simbolos) {
-                            if (flag == true && s.parametro_lido == false) {
-                                ponto_text += "\nSTO " + chamada_nome + "_" + s.nome;
-                                s.parametro_lido = true;
-                                break;
+                        String tipoNome;
+                        int tipoNomeValor = -1;
+                        int tipoSimbolo;
+                        int validacao;
+                        if (procura_simbolo(str)){
+                            for (Simbolo i : lista_simb_aux) {
+                                for (Simbolo s : lista_simbolos) {
+                                    if (s.nome.equals(i.nome) && s.escopo == i.escopo) {
+                                        tipoNomeValor = stringParaTipo(s.tipo);
+                                    }
+                                }
                             }
-
-                            if (chamada_nome.equals(s.nome) && (s.funcao == true || s.proc == true)) {
-                                flag = true;
-                            }
+                        } else {
+                            tipoNome = verificaTipo(str);
+                            tipoNomeValor = stringParaTipo(tipoNome);
                         }
+                        tipoSimbolo = stringParaTipo(tipoUltimoSimbolo);
+                        validacao = atribType(tipoSimbolo, tipoNomeValor);
+                        System.out.println("validacao: " + validacao);
+                        if(validacao == ERR) {
+                            throw new SemanticError("Incompatibilidade de tipos na atribuição. " +
+                                    "Não é possível atribuir " + nomeTipo(tipoNomeValor) +
+                                    " para " + ultimoSimbolo.nome + " de tipo " + nomeTipo(tipoSimbolo));
+                        }
+
+
+//                        System.out.println("Validacao: " + validacao);
                     }
 
-                    vetor_tamanho = Integer.parseInt(str);
+//                    vetor_tamanho = Integer.parseInt(str);
                 } else if (operador.equals("SOMA")) {
-                    if (escrever_text) {
-                        if (calculando_indice == false) {
-                            if (temp1 == true) {
-                                ponto_text += "\nLD 1000";
-                                ponto_text += "\nADDI " + str;
-                                ponto_text += "\nSTO 1000";
-                                pilha_operador.pop();
+                    if(inicio_atribuicao){
+                        Simbolo ultimoSimbolo = lista_simbolos.get(lista_simbolos.size() - 1);
+                        String tipoUltimoSimbolo = ultimoSimbolo.tipo;
+
+                        String tipoNome;
+                        int tipoNomeValor = -1;
+                        int tipoSimbolo;
+                        int validacao;
+                        if (procura_simbolo(str)){
+                            for (Simbolo i : lista_simb_aux) {
+                                for (Simbolo s : lista_simbolos) {
+                                    if (s.nome.equals(i.nome) && s.escopo == i.escopo) {
+                                        tipoNomeValor = stringParaTipo(s.tipo);
+                                    }
+                                }
                             }
-                        } else if (calculando_indice == true && entrando_no_indice == false) {
-                            ponto_text += "\nADDI " + str;
-                            pilha_operador.pop();
-                        } else if (calculando_indice == true && entrando_no_indice == true) {
-                            ponto_text += "\nLDI " + str;
-                            entrando_no_indice = false;
+                        } else {
+                            tipoNome = verificaTipo(str);
+                            tipoNomeValor = stringParaTipo(tipoNome);
                         }
+                        tipoSimbolo = stringParaTipo(tipoUltimoSimbolo);
+                        validacao = atribType(tipoSimbolo, tipoNomeValor);
+                        System.out.println("validacao: " + validacao);
+                        if(validacao == ERR) {
+                            throw new SemanticError("Incompatibilidade de tipos na atribuição. " +
+                                    "Não é possível atribuir " + nomeTipo(tipoNomeValor) +
+                                    " para " + ultimoSimbolo.nome + " de tipo " + nomeTipo(tipoSimbolo));
+                        }
+
+
+//                        System.out.println("Validacao: " + validacao);
                     }
 
-                    vetor_tamanho += Integer.parseInt(str);
+//                        vetor_tamanho = Integer.parseInt(str);
+
+//                    vetor_tamanho += Integer.parseInt(str);
                 } else if (operador.equals("SUBTRACAO")) {
-                    if (escrever_text) {
-                        if (calculando_indice == false) {
-                            if (temp1 == true) {
-                                ponto_text += "\nLD 1000";
-                                ponto_text += "\nSUBI " + str;
-                                ponto_text += "\nSTO 1000";
-                                pilha_operador.pop();
+                    if(inicio_atribuicao){
+                        Simbolo ultimoSimbolo = lista_simbolos.get(lista_simbolos.size() - 1);
+                        String tipoUltimoSimbolo = ultimoSimbolo.tipo;
+
+                        String tipoNome;
+                        int tipoNomeValor = -1;
+                        int tipoSimbolo;
+                        int validacao;
+                        if (procura_simbolo(str)){
+                            for (Simbolo i : lista_simb_aux) {
+                                for (Simbolo s : lista_simbolos) {
+                                    if (s.nome.equals(i.nome) && s.escopo == i.escopo) {
+                                        tipoNomeValor = stringParaTipo(s.tipo);
+                                    }
+                                }
                             }
-                        } else if (calculando_indice == true && entrando_no_indice == false) {
-                            ponto_text += "\nSUBI " + str;
-                            pilha_operador.pop();
-                        } else if (calculando_indice == true && entrando_no_indice == true) {
-                            ponto_text += "\nLDI " + str;
-                            entrando_no_indice = false;
+                        } else {
+                            tipoNome = verificaTipo(str);
+                            tipoNomeValor = stringParaTipo(tipoNome);
                         }
+                        tipoSimbolo = stringParaTipo(tipoUltimoSimbolo);
+                        validacao = atribType(tipoSimbolo, tipoNomeValor);
+                        System.out.println("validacao: " + validacao);
+                        if(validacao == ERR) {
+                            throw new SemanticError("Incompatibilidade de tipos na atribuição. " +
+                                    "Não é possível atribuir " + nomeTipo(tipoNomeValor) +
+                                    " para " + ultimoSimbolo.nome + " de tipo " + nomeTipo(tipoSimbolo));
+                        }
+
+
+//                        System.out.println("Validacao: " + validacao);
                     }
 
                     vetor_tamanho += Integer.parseInt(str);
                 } else if (operador.equals("AND")) {
-                    if (escrever_text) {
-                        if (temp1 == true) {
-                            ponto_text += "\nLD 1000";
-                            ponto_text += "\nANDI " + str;
-                            ponto_text += "\nSTO 1000";
+                    if(inicio_atribuicao){
+                        Simbolo ultimoSimbolo = lista_simbolos.get(lista_simbolos.size() - 1);
+                        String tipoUltimoSimbolo = ultimoSimbolo.tipo;
 
-                            pilha_operador.pop();
+                        String tipoNome;
+                        int tipoNomeValor = -1;
+                        int tipoSimbolo;
+                        int validacao;
+                        if (procura_simbolo(str)){
+                            for (Simbolo i : lista_simb_aux) {
+                                for (Simbolo s : lista_simbolos) {
+                                    if (s.nome.equals(i.nome) && s.escopo == i.escopo) {
+                                        tipoNomeValor = stringParaTipo(s.tipo);
+                                    }
+                                }
+                            }
+                        } else {
+                            tipoNome = verificaTipo(str);
+                            tipoNomeValor = stringParaTipo(tipoNome);
                         }
+                        tipoSimbolo = stringParaTipo(tipoUltimoSimbolo);
+                        validacao = atribType(tipoSimbolo, tipoNomeValor);
+                        System.out.println("validacao: " + validacao);
+                        if(validacao == ERR) {
+                            throw new SemanticError("Incompatibilidade de tipos na atribuição. " +
+                                    "Não é possível atribuir " + nomeTipo(tipoNomeValor) +
+                                    " para " + ultimoSimbolo.nome + " de tipo " + nomeTipo(tipoSimbolo));
+                        }
+
+
+//                        System.out.println("Validacao: " + validacao);
                     }
                 } else if (operador.equals("OR_BIT")) {
-                    if (escrever_text) {
-                        if (temp1 == true) {
-                            ponto_text += "\nLD 1000";
-                            ponto_text += "\nORI " + str;
-                            ponto_text += "\nSTO 1000";
 
-                            pilha_operador.pop();
+                    if(inicio_atribuicao){
+                        Simbolo ultimoSimbolo = lista_simbolos.get(lista_simbolos.size() - 1);
+                        String tipoUltimoSimbolo = ultimoSimbolo.tipo;
+
+                        String tipoNome;
+                        int tipoNomeValor = -1;
+                        int tipoSimbolo;
+                        int validacao;
+                        if (procura_simbolo(str)){
+                            for (Simbolo i : lista_simb_aux) {
+                                for (Simbolo s : lista_simbolos) {
+                                    if (s.nome.equals(i.nome) && s.escopo == i.escopo) {
+                                        tipoNomeValor = stringParaTipo(s.tipo);
+                                    }
+                                }
+                            }
+                        } else {
+                            tipoNome = verificaTipo(str);
+                            tipoNomeValor = stringParaTipo(tipoNome);
                         }
+                        tipoSimbolo = stringParaTipo(tipoUltimoSimbolo);
+                        validacao = atribType(tipoSimbolo, tipoNomeValor);
+                        System.out.println("validacao: " + validacao);
+                        if(validacao == ERR) {
+                            throw new SemanticError("Incompatibilidade de tipos na atribuição. " +
+                                    "Não é possível atribuir " + nomeTipo(tipoNomeValor) +
+                                    " para " + ultimoSimbolo.nome + " de tipo " + nomeTipo(tipoSimbolo));
+                        }
+
+
+//                        System.out.println("Validacao: " + validacao);
                     }
-                } else if (operador.equals("XOR_BIT")) {
-                    if (escrever_text) {
-                        if (temp1 == true) {
-                            ponto_text += "\nLD 1000";
-                            ponto_text += "\nXORI " + str;
-                            ponto_text += "\nSTO 1000";
 
-                            pilha_operador.pop();
+//                        vetor_tamanho = Integer.parseInt(str);
+
+                } else if (operador.equals("XOR_BIT")) {
+                    if(inicio_atribuicao){
+                        Simbolo ultimoSimbolo = lista_simbolos.get(lista_simbolos.size() - 1);
+                        String tipoUltimoSimbolo = ultimoSimbolo.tipo;
+
+                        String tipoNome;
+                        int tipoNomeValor = -1;
+                        int tipoSimbolo;
+                        int validacao;
+                        if (procura_simbolo(str)){
+                            for (Simbolo i : lista_simb_aux) {
+                                for (Simbolo s : lista_simbolos) {
+                                    if (s.nome.equals(i.nome) && s.escopo == i.escopo) {
+                                        tipoNomeValor = stringParaTipo(s.tipo);
+                                    }
+                                }
+                            }
+                        } else {
+                            tipoNome = verificaTipo(str);
+                            tipoNomeValor = stringParaTipo(tipoNome);
                         }
+                        tipoSimbolo = stringParaTipo(tipoUltimoSimbolo);
+                        validacao = atribType(tipoSimbolo, tipoNomeValor);
+                        System.out.println("validacao: " + validacao);
+                        if(validacao == ERR) {
+                            throw new SemanticError("Incompatibilidade de tipos na atribuição. " +
+                                    "Não é possível atribuir " + nomeTipo(tipoNomeValor) +
+                                    " para " + ultimoSimbolo.nome + " de tipo " + nomeTipo(tipoSimbolo));
+                        }
+
+
+//                        System.out.println("Validacao: " + validacao);
                     }
                 } else if (operador.equals("NOT")) {
-                    if (escrever_text) {
-                        ponto_text += "\nNOT " + str;
+                    if(inicio_atribuicao){
+                        Simbolo ultimoSimbolo = lista_simbolos.get(lista_simbolos.size() - 1);
+                        String tipoUltimoSimbolo = ultimoSimbolo.tipo;
 
-                        pilha_operador.pop();
+                        String tipoNome;
+                        int tipoNomeValor = -1;
+                        int tipoSimbolo;
+                        int validacao;
+                        if (procura_simbolo(str)){
+                            for (Simbolo i : lista_simb_aux) {
+                                for (Simbolo s : lista_simbolos) {
+                                    if (s.nome.equals(i.nome) && s.escopo == i.escopo) {
+                                        tipoNomeValor = stringParaTipo(s.tipo);
+                                    }
+                                }
+                            }
+                        } else {
+                            tipoNome = verificaTipo(str);
+                            tipoNomeValor = stringParaTipo(tipoNome);
+                        }
+                        tipoSimbolo = stringParaTipo(tipoUltimoSimbolo);
+                        validacao = atribType(tipoSimbolo, tipoNomeValor);
+                        System.out.println("validacao: " + validacao);
+                        if(validacao == ERR) {
+                            throw new SemanticError("Incompatibilidade de tipos na atribuição. " +
+                                    "Não é possível atribuir " + nomeTipo(tipoNomeValor) +
+                                    " para " + ultimoSimbolo.nome + " de tipo " + nomeTipo(tipoSimbolo));
+                        }
+
+
+//                        System.out.println("Validacao: " + validacao);
                     }
                 } else if (operador.equals("MAIOR") || operador.equals("MENOR") || operador.equals("MAIOR_IGUAL") ||
                         operador.equals("MENOR_IGUAL") || operador.equals("IGUAL") || operador.equals("DIFERENTE")) {
-                    if (escrever_text) {
-                        if (temp1 == true) {
-                            ponto_text += "\nLD 1000";
-                            ponto_text += "\nSUB " + str;
-                            ponto_text += "\nSTO 1000";
+                    if(inicio_atribuicao){
+                        Simbolo ultimoSimbolo = lista_simbolos.get(lista_simbolos.size() - 1);
+                        String tipoUltimoSimbolo = ultimoSimbolo.tipo;
 
-                            pilha_operador.pop();
+                        String tipoNome;
+                        int tipoNomeValor = -1;
+                        int tipoSimbolo;
+                        int validacao;
+                        if (procura_simbolo(str)){
+                            for (Simbolo i : lista_simb_aux) {
+                                for (Simbolo s : lista_simbolos) {
+                                    if (s.nome.equals(i.nome) && s.escopo == i.escopo) {
+                                        tipoNomeValor = stringParaTipo(s.tipo);
+                                    }
+                                }
+                            }
+                        } else {
+                            tipoNome = verificaTipo(str);
+                            tipoNomeValor = stringParaTipo(tipoNome);
                         }
+                        tipoSimbolo = stringParaTipo(tipoUltimoSimbolo);
+                        validacao = atribType(tipoSimbolo, tipoNomeValor);
+                        System.out.println("validacao: " + validacao);
+                        if(validacao == ERR) {
+                            throw new SemanticError("Incompatibilidade de tipos na atribuição. " +
+                                    "Não é possível atribuir " + nomeTipo(tipoNomeValor) +
+                                    " para " + ultimoSimbolo.nome + " de tipo " + nomeTipo(tipoSimbolo));
+                        }
+
+
+//                        System.out.println("Validacao: " + validacao);
+                    }
+
+                } else if (operador.equals("MULTIPLICACAO")){
+                    if(inicio_atribuicao){
+                        Simbolo ultimoSimbolo = lista_simbolos.get(lista_simbolos.size() - 1);
+                        String tipoUltimoSimbolo = ultimoSimbolo.tipo;
+
+                        String tipoNome;
+                        int tipoNomeValor = -1;
+                        int tipoSimbolo;
+                        int validacao;
+                        if (procura_simbolo(str)){
+                            for (Simbolo i : lista_simb_aux) {
+                                for (Simbolo s : lista_simbolos) {
+                                    if (s.nome.equals(i.nome) && s.escopo == i.escopo) {
+                                        tipoNomeValor = stringParaTipo(s.tipo);
+                                    }
+                                }
+                            }
+                        } else {
+                            tipoNome = verificaTipo(str);
+                            tipoNomeValor = stringParaTipo(tipoNome);
+                        }
+                        tipoSimbolo = stringParaTipo(tipoUltimoSimbolo);
+                        validacao = atribType(tipoSimbolo, tipoNomeValor);
+                        System.out.println("validacao: " + validacao);
+                        if(validacao == ERR) {
+                            throw new SemanticError("Incompatibilidade de tipos na atribuição. " +
+                                    "Não é possível atribuir " + nomeTipo(tipoNomeValor) +
+                                    " para " + ultimoSimbolo.nome + " de tipo " + nomeTipo(tipoSimbolo));
+                        }
+
+
+//                        System.out.println("Validacao: " + validacao);
+                    }
+                } else if (operador.equals("RESTO")) {
+                    if(inicio_atribuicao){
+                        Simbolo ultimoSimbolo = lista_simbolos.get(lista_simbolos.size() - 1);
+                        String tipoUltimoSimbolo = ultimoSimbolo.tipo;
+
+                        String tipoNome;
+                        int tipoNomeValor = -1;
+                        int tipoSimbolo;
+                        int validacao;
+                        if (procura_simbolo(str)){
+                            for (Simbolo i : lista_simb_aux) {
+                                for (Simbolo s : lista_simbolos) {
+                                    if (s.nome.equals(i.nome) && s.escopo == i.escopo) {
+                                        tipoNomeValor = stringParaTipo(s.tipo);
+                                    }
+                                }
+                            }
+                        } else {
+                            tipoNome = verificaTipo(str);
+                            tipoNomeValor = stringParaTipo(tipoNome);
+                        }
+                        tipoSimbolo = stringParaTipo(tipoUltimoSimbolo);
+                        validacao = atribType(tipoSimbolo, tipoNomeValor);
+                        System.out.println("validacao: " + validacao);
+                        if(validacao == ERR) {
+                            throw new SemanticError("Incompatibilidade de tipos na atribuição. " +
+                                    "Não é possível atribuir " + nomeTipo(tipoNomeValor) +
+                                    " para " + ultimoSimbolo.nome + " de tipo " + nomeTipo(tipoSimbolo));
+                        }
+
+
+//                        System.out.println("Validacao: " + validacao);
+                    }
+                } else if (operador.equals("DIVISAO")) {
+                    if(inicio_atribuicao){
+                        Simbolo ultimoSimbolo = lista_simbolos.get(lista_simbolos.size() - 1);
+                        String tipoUltimoSimbolo = ultimoSimbolo.tipo;
+
+                        String tipoNome;
+                        int tipoNomeValor = -1;
+                        int tipoSimbolo;
+                        int validacao;
+                        if (procura_simbolo(str)){
+                            for (Simbolo i : lista_simb_aux) {
+                                for (Simbolo s : lista_simbolos) {
+                                    if (s.nome.equals(i.nome) && s.escopo == i.escopo) {
+                                        tipoNomeValor = stringParaTipo(s.tipo);
+                                    }
+                                }
+                            }
+                        } else {
+                            tipoNome = verificaTipo(str);
+                            tipoNomeValor = stringParaTipo(tipoNome);
+                        }
+                        tipoSimbolo = stringParaTipo(tipoUltimoSimbolo);
+                        validacao = atribType(tipoSimbolo, tipoNomeValor);
+                        System.out.println("validacao: " + validacao);
+                        if(validacao == ERR) {
+                            throw new SemanticError("Incompatibilidade de tipos na atribuição. " +
+                                    "Não é possível atribuir " + nomeTipo(tipoNomeValor) +
+                                    " para " + ultimoSimbolo.nome + " de tipo " + nomeTipo(tipoSimbolo));
+                        }
+
+
+//                        System.out.println("Validacao: " + validacao);
                     }
                 }
+//                inicio_atribuicao = false;
                 break;
 
             case 21:
@@ -675,15 +969,387 @@ public class Semantico {
                 break;
 
             case 25:
-                for (Simbolo i : lista_simb_aux) {
-                    for (Simbolo s : lista_simbolos) {
-                        if (s.nome.equals(i.nome) && s.escopo == i.escopo) {
-                            ponto_text += "\nLD 1000 ";
-                            ponto_text += "\nSTO " + s.nome;
-                            temp1 = false;
+                if (!pilha_operador.isEmpty()) {
+                    operador = pilha_operador.peek();
+                } else {
+                    operador = "";
+                }
+
+                if (operador.equals("") || (operador.equals("") && calculando_indice == true)) {
+                    if(inicio_atribuicao){
+                        Simbolo ultimoSimbolo = lista_simbolos.get(lista_simbolos.size() - 1);
+                        String tipoUltimoSimbolo = ultimoSimbolo.tipo;
+
+                        String tipoNome;
+                        int tipoNomeValor = -1;
+                        int tipoSimbolo;
+                        int validacao;
+                        if (procura_simbolo(str)){
+                            for (Simbolo i : lista_simb_aux) {
+                                for (Simbolo s : lista_simbolos) {
+                                    if (s.nome.equals(i.nome) && s.escopo == i.escopo) {
+                                        tipoNomeValor = stringParaTipo(s.tipo);
+                                    }
+                                }
+                            }
+                        } else {
+                            tipoNome = verificaTipo(str);
+                            tipoNomeValor = stringParaTipo(tipoNome);
                         }
+                        tipoSimbolo = stringParaTipo(tipoUltimoSimbolo);
+                        validacao = atribType(tipoSimbolo, tipoNomeValor);
+                        System.out.println("validacao: " + validacao);
+                        if(validacao == ERR) {
+                            throw new SemanticError("Incompatibilidade de tipos na atribuição. " +
+                                    "Não é possível atribuir " + nomeTipo(tipoNomeValor) +
+                                    " para " + ultimoSimbolo.nome + " de tipo " + nomeTipo(tipoSimbolo));
+                        }
+
+
+//                        System.out.println("Validacao: " + validacao);
+                    }
+
+//                    vetor_tamanho = Integer.parseInt(str);
+                } else if (operador.equals("SOMA")) {
+                    if(inicio_atribuicao){
+                        Simbolo ultimoSimbolo = lista_simbolos.get(lista_simbolos.size() - 1);
+                        String tipoUltimoSimbolo = ultimoSimbolo.tipo;
+
+                        String tipoNome;
+                        int tipoNomeValor = -1;
+                        int tipoSimbolo;
+                        int validacao;
+                        if (procura_simbolo(str)){
+                            for (Simbolo i : lista_simb_aux) {
+                                for (Simbolo s : lista_simbolos) {
+                                    if (s.nome.equals(i.nome) && s.escopo == i.escopo) {
+                                        tipoNomeValor = stringParaTipo(s.tipo);
+                                    }
+                                }
+                            }
+                        } else {
+                            tipoNome = verificaTipo(str);
+                            tipoNomeValor = stringParaTipo(tipoNome);
+                        }
+                        tipoSimbolo = stringParaTipo(tipoUltimoSimbolo);
+                        validacao = atribType(tipoSimbolo, tipoNomeValor);
+                        System.out.println("validacao: " + validacao);
+                        if(validacao == ERR) {
+                            throw new SemanticError("Incompatibilidade de tipos na atribuição. " +
+                                    "Não é possível atribuir " + nomeTipo(tipoNomeValor) +
+                                    " para " + ultimoSimbolo.nome + " de tipo " + nomeTipo(tipoSimbolo));
+                        }
+
+
+//                        System.out.println("Validacao: " + validacao);
+                    }
+
+//                        vetor_tamanho = Integer.parseInt(str);
+
+//                    vetor_tamanho += Integer.parseInt(str);
+                } else if (operador.equals("SUBTRACAO")) {
+                    if(inicio_atribuicao){
+                        Simbolo ultimoSimbolo = lista_simbolos.get(lista_simbolos.size() - 1);
+                        String tipoUltimoSimbolo = ultimoSimbolo.tipo;
+
+                        String tipoNome;
+                        int tipoNomeValor = -1;
+                        int tipoSimbolo;
+                        int validacao;
+                        if (procura_simbolo(str)){
+                            for (Simbolo i : lista_simb_aux) {
+                                for (Simbolo s : lista_simbolos) {
+                                    if (s.nome.equals(i.nome) && s.escopo == i.escopo) {
+                                        tipoNomeValor = stringParaTipo(s.tipo);
+                                    }
+                                }
+                            }
+                        } else {
+                            tipoNome = verificaTipo(str);
+                            tipoNomeValor = stringParaTipo(tipoNome);
+                        }
+                        tipoSimbolo = stringParaTipo(tipoUltimoSimbolo);
+                        validacao = atribType(tipoSimbolo, tipoNomeValor);
+                        System.out.println("validacao: " + validacao);
+                        if(validacao == ERR) {
+                            throw new SemanticError("Incompatibilidade de tipos na atribuição. " +
+                                    "Não é possível atribuir " + nomeTipo(tipoNomeValor) +
+                                    " para " + ultimoSimbolo.nome + " de tipo " + nomeTipo(tipoSimbolo));
+                        }
+
+
+//                        System.out.println("Validacao: " + validacao);
+                    }
+
+//                    vetor_tamanho += Integer.parseInt(str);
+                } else if (operador.equals("AND")) {
+                    if(inicio_atribuicao){
+                        Simbolo ultimoSimbolo = lista_simbolos.get(lista_simbolos.size() - 1);
+                        String tipoUltimoSimbolo = ultimoSimbolo.tipo;
+
+                        String tipoNome;
+                        int tipoNomeValor = -1;
+                        int tipoSimbolo;
+                        int validacao;
+                        if (procura_simbolo(str)){
+                            for (Simbolo i : lista_simb_aux) {
+                                for (Simbolo s : lista_simbolos) {
+                                    if (s.nome.equals(i.nome) && s.escopo == i.escopo) {
+                                        tipoNomeValor = stringParaTipo(s.tipo);
+                                    }
+                                }
+                            }
+                        } else {
+                            tipoNome = verificaTipo(str);
+                            tipoNomeValor = stringParaTipo(tipoNome);
+                        }
+                        tipoSimbolo = stringParaTipo(tipoUltimoSimbolo);
+                        validacao = atribType(tipoSimbolo, tipoNomeValor);
+                        System.out.println("validacao: " + validacao);
+                        if(validacao == ERR) {
+                            throw new SemanticError("Incompatibilidade de tipos na atribuição. " +
+                                    "Não é possível atribuir " + nomeTipo(tipoNomeValor) +
+                                    " para " + ultimoSimbolo.nome + " de tipo " + nomeTipo(tipoSimbolo));
+                        }
+
+
+//                        System.out.println("Validacao: " + validacao);
+                    }
+                } else if (operador.equals("OR_BIT")) {
+                    if(inicio_atribuicao){
+                        Simbolo ultimoSimbolo = lista_simbolos.get(lista_simbolos.size() - 1);
+                        String tipoUltimoSimbolo = ultimoSimbolo.tipo;
+
+                        String tipoNome;
+                        int tipoNomeValor = -1;
+                        int tipoSimbolo;
+                        int validacao;
+                        if (procura_simbolo(str)){
+                            for (Simbolo i : lista_simb_aux) {
+                                for (Simbolo s : lista_simbolos) {
+                                    if (s.nome.equals(i.nome) && s.escopo == i.escopo) {
+                                        tipoNomeValor = stringParaTipo(s.tipo);
+                                    }
+                                }
+                            }
+                        } else {
+                            tipoNome = verificaTipo(str);
+                            tipoNomeValor = stringParaTipo(tipoNome);
+                        }
+                        tipoSimbolo = stringParaTipo(tipoUltimoSimbolo);
+                        validacao = atribType(tipoSimbolo, tipoNomeValor);
+                        System.out.println("validacao: " + validacao);
+                        if(validacao == ERR) {
+                            throw new SemanticError("Incompatibilidade de tipos na atribuição. " +
+                                    "Não é possível atribuir " + nomeTipo(tipoNomeValor) +
+                                    " para " + ultimoSimbolo.nome + " de tipo " + nomeTipo(tipoSimbolo));
+                        }
+
+
+//                        System.out.println("Validacao: " + validacao);
+                    }
+                } else if (operador.equals("XOR_BIT")) {
+                    if(inicio_atribuicao){
+                        Simbolo ultimoSimbolo = lista_simbolos.get(lista_simbolos.size() - 1);
+                        String tipoUltimoSimbolo = ultimoSimbolo.tipo;
+
+                        String tipoNome;
+                        int tipoNomeValor = -1;
+                        int tipoSimbolo;
+                        int validacao;
+                        if (procura_simbolo(str)){
+                            for (Simbolo i : lista_simb_aux) {
+                                for (Simbolo s : lista_simbolos) {
+                                    if (s.nome.equals(i.nome) && s.escopo == i.escopo) {
+                                        tipoNomeValor = stringParaTipo(s.tipo);
+                                    }
+                                }
+                            }
+                        } else {
+                            tipoNome = verificaTipo(str);
+                            tipoNomeValor = stringParaTipo(tipoNome);
+                        }
+                        tipoSimbolo = stringParaTipo(tipoUltimoSimbolo);
+                        validacao = atribType(tipoSimbolo, tipoNomeValor);
+                        System.out.println("validacao: " + validacao);
+                        if(validacao == ERR) {
+                            throw new SemanticError("Incompatibilidade de tipos na atribuição. " +
+                                    "Não é possível atribuir " + nomeTipo(tipoNomeValor) +
+                                    " para " + ultimoSimbolo.nome + " de tipo " + nomeTipo(tipoSimbolo));
+                        }
+
+
+//                        System.out.println("Validacao: " + validacao);
+                    }
+                } else if (operador.equals("NOT")) {
+                    if(inicio_atribuicao){
+                        Simbolo ultimoSimbolo = lista_simbolos.get(lista_simbolos.size() - 1);
+                        String tipoUltimoSimbolo = ultimoSimbolo.tipo;
+
+                        String tipoNome;
+                        int tipoNomeValor = -1;
+                        int tipoSimbolo;
+                        int validacao;
+                        if (procura_simbolo(str)){
+                            for (Simbolo i : lista_simb_aux) {
+                                for (Simbolo s : lista_simbolos) {
+                                    if (s.nome.equals(i.nome) && s.escopo == i.escopo) {
+                                        tipoNomeValor = stringParaTipo(s.tipo);
+                                    }
+                                }
+                            }
+                        } else {
+                            tipoNome = verificaTipo(str);
+                            tipoNomeValor = stringParaTipo(tipoNome);
+                        }
+                        tipoSimbolo = stringParaTipo(tipoUltimoSimbolo);
+                        validacao = atribType(tipoSimbolo, tipoNomeValor);
+                        System.out.println("validacao: " + validacao);
+                        if(validacao == ERR) {
+                            throw new SemanticError("Incompatibilidade de tipos na atribuição. " +
+                                    "Não é possível atribuir " + nomeTipo(tipoNomeValor) +
+                                    " para " + ultimoSimbolo.nome + " de tipo " + nomeTipo(tipoSimbolo));
+                        }
+
+
+//                        System.out.println("Validacao: " + validacao);
+                    }
+                } else if (operador.equals("MAIOR") || operador.equals("MENOR") || operador.equals("MAIOR_IGUAL") ||
+                        operador.equals("MENOR_IGUAL") || operador.equals("IGUAL") || operador.equals("DIFERENTE")) {
+                    if(inicio_atribuicao){
+                        Simbolo ultimoSimbolo = lista_simbolos.get(lista_simbolos.size() - 1);
+                        String tipoUltimoSimbolo = ultimoSimbolo.tipo;
+
+                        String tipoNome;
+                        int tipoNomeValor = -1;
+                        int tipoSimbolo;
+                        int validacao;
+                        if (procura_simbolo(str)){
+                            for (Simbolo i : lista_simb_aux) {
+                                for (Simbolo s : lista_simbolos) {
+                                    if (s.nome.equals(i.nome) && s.escopo == i.escopo) {
+                                        tipoNomeValor = stringParaTipo(s.tipo);
+                                    }
+                                }
+                            }
+                        } else {
+                            tipoNome = verificaTipo(str);
+                            tipoNomeValor = stringParaTipo(tipoNome);
+                        }
+                        tipoSimbolo = stringParaTipo(tipoUltimoSimbolo);
+                        validacao = atribType(tipoSimbolo, tipoNomeValor);
+                        System.out.println("validacao: " + validacao);
+                        if(validacao == ERR) {
+                            throw new SemanticError("Incompatibilidade de tipos na atribuição. " +
+                                    "Não é possível atribuir " + nomeTipo(tipoNomeValor) +
+                                    " para " + ultimoSimbolo.nome + " de tipo " + nomeTipo(tipoSimbolo));
+                        }
+
+
+//                        System.out.println("Validacao: " + validacao);
+                    }
+
+                } else if (operador.equals("MULTIPLICACAO")){
+                    if(inicio_atribuicao){
+                        Simbolo ultimoSimbolo = lista_simbolos.get(lista_simbolos.size() - 1);
+                        String tipoUltimoSimbolo = ultimoSimbolo.tipo;
+
+                        String tipoNome;
+                        int tipoNomeValor = -1;
+                        int tipoSimbolo;
+                        int validacao;
+                        if (procura_simbolo(str)){
+                            for (Simbolo i : lista_simb_aux) {
+                                for (Simbolo s : lista_simbolos) {
+                                    if (s.nome.equals(i.nome) && s.escopo == i.escopo) {
+                                        tipoNomeValor = stringParaTipo(s.tipo);
+                                    }
+                                }
+                            }
+                        } else {
+                            tipoNome = verificaTipo(str);
+                            tipoNomeValor = stringParaTipo(tipoNome);
+                        }
+                        tipoSimbolo = stringParaTipo(tipoUltimoSimbolo);
+                        validacao = atribType(tipoSimbolo, tipoNomeValor);
+                        System.out.println("validacao: " + validacao);
+                        if(validacao == ERR) {
+                            throw new SemanticError("Incompatibilidade de tipos na atribuição. " +
+                                    "Não é possível atribuir " + nomeTipo(tipoNomeValor) +
+                                    " para " + ultimoSimbolo.nome + " de tipo " + nomeTipo(tipoSimbolo));
+                        }
+
+
+//                        System.out.println("Validacao: " + validacao);
+                    }
+                } else if (operador.equals("RESTO")) {
+                    if(inicio_atribuicao){
+                        Simbolo ultimoSimbolo = lista_simbolos.get(lista_simbolos.size() - 1);
+                        String tipoUltimoSimbolo = ultimoSimbolo.tipo;
+
+                        String tipoNome;
+                        int tipoNomeValor = -1;
+                        int tipoSimbolo;
+                        int validacao;
+                        if (procura_simbolo(str)){
+                            for (Simbolo i : lista_simb_aux) {
+                                for (Simbolo s : lista_simbolos) {
+                                    if (s.nome.equals(i.nome) && s.escopo == i.escopo) {
+                                        tipoNomeValor = stringParaTipo(s.tipo);
+                                    }
+                                }
+                            }
+                        } else {
+                            tipoNome = verificaTipo(str);
+                            tipoNomeValor = stringParaTipo(tipoNome);
+                        }
+                        tipoSimbolo = stringParaTipo(tipoUltimoSimbolo);
+                        validacao = atribType(tipoSimbolo, tipoNomeValor);
+                        System.out.println("validacao: " + validacao);
+                        if(validacao == ERR) {
+                            throw new SemanticError("Incompatibilidade de tipos na atribuição. " +
+                                    "Não é possível atribuir " + nomeTipo(tipoNomeValor) +
+                                    " para " + ultimoSimbolo.nome + " de tipo " + nomeTipo(tipoSimbolo));
+                        }
+
+
+//                        System.out.println("Validacao: " + validacao);
+                    }
+                } else if (operador.equals("DIVISAO")) {
+                    if(inicio_atribuicao){
+                        Simbolo ultimoSimbolo = lista_simbolos.get(lista_simbolos.size() - 1);
+                        String tipoUltimoSimbolo = ultimoSimbolo.tipo;
+
+                        String tipoNome;
+                        int tipoNomeValor = -1;
+                        int tipoSimbolo;
+                        int validacao;
+                        if (procura_simbolo(str)){
+                            for (Simbolo i : lista_simb_aux) {
+                                for (Simbolo s : lista_simbolos) {
+                                    if (s.nome.equals(i.nome) && s.escopo == i.escopo) {
+                                        tipoNomeValor = stringParaTipo(s.tipo);
+                                    }
+                                }
+                            }
+                        } else {
+                            tipoNome = verificaTipo(str);
+                            tipoNomeValor = stringParaTipo(tipoNome);
+                        }
+                        tipoSimbolo = stringParaTipo(tipoUltimoSimbolo);
+                        validacao = atribType(tipoSimbolo, tipoNomeValor);
+                        System.out.println("validacao: " + validacao);
+                        if(validacao == ERR) {
+                            throw new SemanticError("Incompatibilidade de tipos na atribuição. " +
+                                    "Não é possível atribuir " + nomeTipo(tipoNomeValor) +
+                                    " para " + ultimoSimbolo.nome + " de tipo " + nomeTipo(tipoSimbolo));
+                        }
+
+
+//                        System.out.println("Validacao: " + validacao);
                     }
                 }
+//                inicio_atribuicao = false;
                 break;
 
             case 26:
