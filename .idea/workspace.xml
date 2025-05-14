@@ -5,25 +5,19 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bfa43d7b-96e5-4c8e-83d2-950ea1b83416" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/json_20250107.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/json_simple_1_1_1.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ExemploIde.iml" beforeDir="false" afterPath="$PROJECT_DIR$/ExemploIde.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/ExemploIde/MainWindow$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/ExemploIde/MainWindow$1.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/ExemploIde/MainWindow$2.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/ExemploIde/MainWindow$2.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/ExemploIde/MainWindow$3.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/ExemploIde/MainWindow$3.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/ExemploIde/MainWindow.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/ExemploIde/MainWindow.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/ExemploIde/gals/Semantico$SemanticError.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/ExemploIde/gals/Semantico$SemanticError.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/ExemploIde/gals/Semantico$Simbolo.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/ExemploIde/gals/Semantico$Simbolo.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/ExemploIde/gals/Semantico.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/ExemploIde/gals/Semantico.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/simbolos.json" beforeDir="false" afterPath="$PROJECT_DIR$/simbolos.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/MainWindow.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/MainWindow.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/compil/SemanticTable.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/compil/SemanticTable.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/gals/AnalysisError.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/gals/AnalysisError.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/gals/Constants.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/gals/Constants.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/gals/LexicalError.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/gals/LexicalError.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/gals/Lexico.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/gals/Lexico.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/gals/ParserConstants.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/gals/ParserConstants.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/gals/ScannerConstants.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/gals/ScannerConstants.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/gals/SemanticError.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/gals/SemanticError.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/compil/SemanticTable.java" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/gals/Semantico.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/gals/Semantico.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/gals/Sintatico.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/gals/Sintatico.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/gals/SyntacticError.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/gals/SyntacticError.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/gals/Token.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/gals/Token.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/temp.tmp" beforeDir="false" afterPath="$PROJECT_DIR$/temp.tmp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -41,26 +35,26 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Application.MainWindow.executor": "Run",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "git-widget-placeholder": "sematico/cases",
-    "last_opened_file_path": "C:/Users/vinic/Documents/IDEMacaco",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "project.structure.last.edited": "Libraries",
-    "project.structure.proportion": "0.0",
-    "project.structure.side.proportion": "0.0",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.MainWindow.executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;correcao/semantico&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/vinic/Documents/IDEMacaco&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Libraries&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\vinic\Documents\IDEMacaco\src" />
@@ -85,10 +79,22 @@
       <updated>1745965732056</updated>
       <workItem from="1745965733617" duration="61000" />
       <workItem from="1746996967228" duration="11491000" />
+      <workItem from="1747189573793" duration="6054000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
 </project>
