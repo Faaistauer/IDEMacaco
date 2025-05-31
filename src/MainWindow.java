@@ -99,6 +99,8 @@ public class MainWindow extends javax.swing.JFrame {
                 g2.fillRect(trackBounds.x, trackBounds.y, trackBounds.width, trackBounds.height);
                 g2.dispose();
             }
+
+
         });
 
         jScrollPane2.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
@@ -295,6 +297,8 @@ public class MainWindow extends javax.swing.JFrame {
         Lexico lex = new Lexico();
         Sintatico sint = new Sintatico();
         Semantico sem = new Semantico();
+
+        sem.limpaSemantico();
 
         lex.setInput(sourceInput.getText());
 

@@ -6,21 +6,12 @@
   <component name="ChangeListManager">
     <list default="true" id="bfa43d7b-96e5-4c8e-83d2-950ea1b83416" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/ExemploIde/arquivo.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/ExemploIde/importador/Dado.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/ExemploIde/importador/Importador.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/ExemploIde/recursos/BenjaminPortrait.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/ExemploIde/recursos/BenjaminPortrait32.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/ExemploIde/recursos/banana.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/ExemploIde/recursos/bloons-td-6.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/ExemploIde/arquivo.txt" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/ExemploIde/arquivo.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/MainWindow.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/MainWindow.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/arquivo.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/arquivo.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/gals/Constants.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/gals/Constants.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/gals/Lexico.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/gals/Lexico.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/gals/ParserConstants.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/gals/ParserConstants.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/gals/ScannerConstants.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/gals/ScannerConstants.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/gals/Semantico.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/gals/Semantico.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/gals/Token.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/gals/Token.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -92,7 +83,10 @@
       <workItem from="1747189573793" duration="6491000" />
       <workItem from="1747259710213" duration="291000" />
       <workItem from="1747260014187" duration="1771000" />
-      <workItem from="1747261809208" duration="3910000" />
+      <workItem from="1747261809208" duration="8751000" />
+      <workItem from="1748471814024" duration="1362000" />
+      <workItem from="1748558906901" duration="7663000" />
+      <workItem from="1748649820018" duration="3548000" />
     </task>
     <servers />
   </component>
