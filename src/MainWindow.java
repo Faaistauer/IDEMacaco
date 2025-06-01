@@ -330,9 +330,16 @@ public class MainWindow extends javax.swing.JFrame {
             simbolosScrollPane.setVisible(false);
             labelTabelaSimbolos.setVisible(false);
         } catch (SemanticError ex) {
-            console.setText("Erro Semântico: " + ex.getLocalizedMessage() + "\n");
-            console.append("Linha: " + ex.getPosition() + "\n");
-            console.append("Mensagem completa: " + ex.getMessage());
+            StringBuilder errorMessage = new StringBuilder();
+            errorMessage.append("Erro Semântico: ").append(ex.getMessage()); // Pega apenas a mensagem
+
+            // Adiciona a linha apenas se a posição for válida (não -1)
+            if (ex.getPosition() != -1) {
+                errorMessage.append("\nLinha: ").append(ex.getPosition());
+            }
+
+            console.setText(errorMessage.toString()); // Define o texto do console de uma vez
+
             // Ocultar a tabela em caso de erro
             simbolosScrollPane.setVisible(false);
             labelTabelaSimbolos.setVisible(false);
