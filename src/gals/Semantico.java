@@ -317,6 +317,10 @@ public class Semantico {
                         ponto_text += "\nLD $in_port";
                         ponto_text += "\nSTO " + str;
                         entrada_saida_dado = "";
+                    } else if (entrada_saida_dado.equals("SAIDA")) {
+                        ponto_text += "\nLD " + str;
+                        ponto_text += "\nSTO $out_port";
+                        entrada_saida_dado = "";
                     }
 
                     if (recebe_atrib.equals("")) {
@@ -515,16 +519,12 @@ public class Semantico {
                     operador = "";
                 }
 
-                // Lógica de escape para cálculo de índice ou parênteses de fechamento.
-                // Esta lógica parece um pouco redundante se a primeira condição já cobre 'calculando_indice'.
-                // Mantenho para consistência com seu código original.
+
                 if (Objects.equals(str, ")")) {
                     break;
                 }
 
-                // --- Bloco para Literais/Identificadores sem Operador Pendente (Primeiro operando) ---
-                // Este bloco é executado se não há operador anterior esperando para formar uma expressão.
-                // Isso significa que 'str' é o primeiro elemento de uma nova expressão ou uma atribuição simples.
+
                 if (operador.equals("")) {
 
                     pilha_constantes.push(str); // Empilha o valor do literal/identificador (string).
@@ -664,11 +664,11 @@ public class Semantico {
                     tipoExpressao = tipoResultanteDaOperacao;
 
                     // Geração de Código para a MULTIPLICACAO.
-                    if (escrever_text) {
-                        ponto_text += "\nLD 1000";
-                        ponto_text += "\nMULI " + operando2Str;
-                        ponto_text += "\nSTO 1000";
-                    }
+//                    if (escrever_text) {
+//                        ponto_text += "\nLD 1000";
+//                        ponto_text += "\nMULI " + operando2Str;
+//                        ponto_text += "\nSTO 1000";
+//                    }
                     entrando_no_indice = false;
 
                 } else if (operador.equals("DIVISAO")) {
@@ -700,11 +700,11 @@ public class Semantico {
                     tipoExpressao = tipoResultanteDaOperacao;
 
                     // Geração de Código para a DIVISAO.
-                    if (escrever_text) {
-                        ponto_text += "\nLD 1000";
-                        ponto_text += "\nDIVI " + operando2Str;
-                        ponto_text += "\nSTO 1000";
-                    }
+//                    if (escrever_text) {
+//                        ponto_text += "\nLD 1000";
+//                        ponto_text += "\nDIVI " + operando2Str;
+//                        ponto_text += "\nSTO 1000";
+//                    }
                     entrando_no_indice = false;
 
                 } else if (operador.equals("RESTO")) {
@@ -735,11 +735,11 @@ public class Semantico {
                     tipoExpressao = tipoResultanteDaOperacao;
 
                     // Geração de Código para o RESTO.
-                    if (escrever_text) {
-                        ponto_text += "\nLD 1000";
-                        ponto_text += "\nREMI " + operando2Str; // Assumindo instrução REMI.
-                        ponto_text += "\nSTO 1000";
-                    }
+//                    if (escrever_text) {
+//                        ponto_text += "\nLD 1000";
+//                        ponto_text += "\nREMI " + operando2Str; // Assumindo instrução REMI.
+//                        ponto_text += "\nSTO 1000";
+//                    }
                     entrando_no_indice = false;
 
                 }
@@ -905,14 +905,14 @@ public class Semantico {
                     tipoExpressao = tipoResultanteDaOperacao; // O resultado de relacionais é BOOLEAN.
 
                     // Geração de Código para Operadores Relacionais.
-                    if (escrever_text) {
-                        ponto_text += "\nLD 1000"; // Carrega o primeiro operando.
-                        ponto_text += "\nSUBI " + operando2Str; // Subtrai o segundo para comparação.
-                        ponto_text += "\nSTO 1000"; // Armazena a diferença.
-                        // Em seguida, você precisaria de instruções de salto condicional baseadas no resultado de 1000.
-                        // Ex: BREQ (Branch if Equal), BRLT (Branch if Less Than), etc.
-                        // Esta parte da geração de código é complexa e depende da sua VM.
-                    }
+//                    if (escrever_text) {
+//                        ponto_text += "\nLD 1000"; // Carrega o primeiro operando.
+//                        ponto_text += "\nSUBI " + operando2Str; // Subtrai o segundo para comparação.
+//                        ponto_text += "\nSTO 1000"; // Armazena a diferença.
+//                        // Em seguida, você precisaria de instruções de salto condicional baseadas no resultado de 1000.
+//                        // Ex: BREQ (Branch if Equal), BRLT (Branch if Less Than), etc.
+//                        // Esta parte da geração de código é complexa e depende da sua VM.
+//                    }
                     entrando_no_indice = false;
                 }
 
@@ -922,6 +922,7 @@ public class Semantico {
                     throw new SemanticError("Erro semântico: Índice de vetor deve ser do tipo inteiro.");
                 } else if(calculando_indice == true && tipoExpressao == INT){
                     calculando_indice = false;
+                    vetor_tamanho = Integer.parseInt(str);
                 }
                 // A flag 'inicio_atribuicao' deve ser gerenciada em um ponto mais alto,
                 // geralmente onde a atribuição como um todo e reconhecida e concluída (ex: case 25)
@@ -1580,7 +1581,7 @@ public class Semantico {
         inicio_atribuicao = true;
         entrando_no_indice = false;
         ponto_data = ".data\n";
-        ponto_text = ".text\n JMP _main \n";
+        ponto_text = ".text\n JMP _main \n\n _main:";
         parametro_aux = "";
         chamada_nome = "";
         retorno = "";
