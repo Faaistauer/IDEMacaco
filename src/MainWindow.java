@@ -8,9 +8,11 @@ import gals.SyntacticError;
 import gals.SemanticError;
 
 import java.awt.*;
+import java.awt.event.MouseListener;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -21,19 +23,34 @@ public class MainWindow extends javax.swing.JFrame {
     // Classe interna LineNumberedTextArea
     private class LineNumberedTextArea extends JTextArea {
         private JTextArea lineNumbers;
-        private static final int FONT_SIZE = 14; // Aumente este valor para uma fonte maior
+        private static final int FONT_SIZE = 20;
+        private static final Font MONOSPACED_FONT = new Font("Monospaced", Font.PLAIN, FONT_SIZE);
 
         public LineNumberedTextArea() {
             super();
-            lineNumbers = new JTextArea("1");
-            lineNumbers.setBackground(Color.decode("#8B4513"));
-            lineNumbers.setForeground(Color.WHITE);
+            lineNumbers = new JTextArea("1") {
+                @Override
+                public void addMouseListener(MouseListener l) {
+                    // Impede a adição de MouseListeners
+                }
+                
+                @Override
+                public void setEnabled(boolean enabled) {
+                    // Mantém sempre desabilitado
+                    super.setEnabled(false);
+                }
+            };
+            
+            lineNumbers.setBackground(Color.decode("#dd9830"));  // Mesma cor do editor
+            lineNumbers.setForeground(Color.BLACK);  // Cor do texto dos números
             lineNumbers.setEditable(false);
-            lineNumbers.setFont(customFont.deriveFont(Font.PLAIN, FONT_SIZE));
-            
-            // Configura a fonte do editor principal
-            setFont(customFont.deriveFont(Font.PLAIN, FONT_SIZE));
-            
+            lineNumbers.setEnabled(false);
+            lineNumbers.setHighlighter(null);
+            lineNumbers.setFont(MONOSPACED_FONT);
+            lineNumbers.setLineWrap(false);
+            lineNumbers.setFocusable(false);
+            updateLineNumbers();
+
             getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
                 public void changedUpdate(javax.swing.event.DocumentEvent e) {
                     updateLineNumbers();
@@ -59,6 +76,13 @@ public class MainWindow extends javax.swing.JFrame {
                 numbers.append(i).append("\n");
             }
             lineNumbers.setText(numbers.toString());
+
+            // Recalcula a largura preferida
+            FontMetrics fm = lineNumbers.getFontMetrics(lineNumbers.getFont());
+            int maxDigits = String.valueOf(lines).length();
+            int width = fm.stringWidth("0") * (maxDigits + 1); // Adiciona um espaço extra
+            lineNumbers.setPreferredSize(new Dimension(width, 1));
+            lineNumbers.setSize(new Dimension(width, 1));
         }
     }
 
@@ -66,7 +90,7 @@ public class MainWindow extends javax.swing.JFrame {
      * Creates new form MainWindow
      */
     public MainWindow() {
-        loadCustomFont(); // Adicione esta linha no início do construtor
+       
         initComponents();
         setSize(1320, 700);
         ImageIcon icon = new ImageIcon(getClass().getResource("/recursos/BenjaminPortrait32.png"));
@@ -147,6 +171,42 @@ public class MainWindow extends javax.swing.JFrame {
 
 
         });
+        jScrollPane3.getVerticalScrollBar().setUI(new javax.swing.plaf.basic.BasicScrollBarUI() {
+            @Override
+            protected void configureScrollBarColors() {
+                this.thumbColor = Color.decode("#a0522d");
+                this.trackColor = Color.decode("#f5deb3");
+            }
+            @Override
+            protected JButton createDecreaseButton(int orientation) {
+                return createZeroButton();
+            }
+            @Override
+            protected JButton createIncreaseButton(int orientation) {
+                return createZeroButton();
+            }
+            private JButton createZeroButton() {
+                JButton button = new JButton();
+                button.setPreferredSize(new Dimension(0, 0));
+                button.setMinimumSize(new Dimension(0, 0));
+                button.setMaximumSize(new Dimension(0, 0));
+                return button;
+            }
+            @Override
+            protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setColor(thumbColor);
+                g2.fillRect(thumbBounds.x, thumbBounds.y, thumbBounds.width, thumbBounds.height);
+                g2.dispose();
+            }
+            @Override
+            protected void paintTrack(Graphics g, JComponent c, Rectangle trackBounds) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setColor(trackColor);
+                g2.fillRect(trackBounds.x, trackBounds.y, trackBounds.width, trackBounds.height);
+                g2.dispose();
+            }
+        });
 
         jScrollPane2.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         jScrollPane2.setPreferredSize(new Dimension(400, 300));
@@ -154,25 +214,10 @@ public class MainWindow extends javax.swing.JFrame {
         // Inicialmente ocultar a tabela de símbolos
         simbolosScrollPane.setVisible(false);
         labelTabelaSimbolos.setVisible(false);
-        
-        loadCustomFont(); // Carregar a fonte personalizada
+
     }
 
-    private Font customFont;
-
-    private void loadCustomFont() {
-        try {
-            // Carrega o arquivo TTF do diretório de recursos
-            customFont = Font.createFont(Font.TRUETYPE_FONT, 
-                getClass().getResourceAsStream("/recursos/fonts/LuckiestGuy-Regular.ttf"));
-            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-            ge.registerFont(customFont);
-        } catch (IOException | FontFormatException e) {
-            e.printStackTrace();
-            // Em caso de erro, usa uma fonte padrão
-            customFont = new Font("Monospaced", Font.PLAIN, 14);
-        }
-    }
+   
 
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
@@ -182,6 +227,8 @@ public class MainWindow extends javax.swing.JFrame {
         sourceInput = new LineNumberedTextArea();
         jScrollPane2 = new JScrollPane();
         console = new JTextArea();
+        jScrollPane3 = new JScrollPane();
+        console2 = new JTextArea(); // Novo console
         buttonCompile = new JButton();
         
         // Componentes para a tabela de símbolos
@@ -196,8 +243,20 @@ public class MainWindow extends javax.swing.JFrame {
         console.setLineWrap(true);
         console.setRows(5);
         console.setTabSize(4);
-        console.setBackground(Color.decode("#dd9830"));
         jScrollPane2.setViewportView(console);
+        console.setBackground(Color.decode("#dd9830"));
+
+        //======== jScrollPane3 ========
+        {
+            //---- console2 ----
+            console2.setEditable(false);
+            console2.setColumns(20);
+            console2.setLineWrap(true);
+            console2.setRows(5);
+            console2.setTabSize(4);
+            jScrollPane3.setViewportView(console2);
+            console2.setBackground(Color.decode("#dd9830"));
+        }
 
         // Configuração da tabela de símbolos
         String[] colunas = {"Tipo", "Nome", "Iniciado", "Usado", "Escopo", "Parâmetro", 
@@ -257,21 +316,22 @@ public class MainWindow extends javax.swing.JFrame {
 
         // Painel lateral para gif e botão
         JPanel sidePanel = new JPanel();
-        sidePanel.setOpaque(false);
+        sidePanel.setOpaque(true); // Alterado para true para que a cor de fundo seja visível
+        sidePanel.setBackground(Color.decode("#8B4513")); // Definir a cor de fundo
         sidePanel.setLayout(new BoxLayout(sidePanel, BoxLayout.Y_AXIS));
 
         // Painel para alinhar o gif à esquerda
         JPanel gifPanel = new JPanel();
-        gifPanel.setOpaque(false);
+        gifPanel.setOpaque(true); // Alterado para true
+        gifPanel.setBackground(Color.decode("#8B4513")); // Definir a cor de fundo
         gifPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
         gifPanel.add(gifPlaceholder);
         sidePanel.add(gifPanel);
 
-        sidePanel.add(Box.createVerticalStrut(10)); // Espaço entre gif e botão
-
         // Painel para alinhar o botão à esquerda (já está correto)
         JPanel buttonPanel = new JPanel();
-        buttonPanel.setOpaque(false);
+        buttonPanel.setOpaque(true); // Alterado para true
+        buttonPanel.setBackground(Color.decode("#8B4513")); // Definir a cor de fundo
         buttonPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
         buttonPanel.add(buttonCompile);
         sidePanel.add(buttonPanel);
@@ -292,7 +352,9 @@ public class MainWindow extends javax.swing.JFrame {
             editorPanel.add(sourceInput, BorderLayout.CENTER);
             jScrollPane1.setViewportView(editorPanel);
             sourceInput.setBackground(Color.decode("#dd9830"));
-            sourceInput.setFont(customFont.deriveFont(Font.PLAIN, 18)); // Aumentado para 18
+            Font fonte = new Font("Monospaced", Font.PLAIN, 20);
+            sourceInput.setFont(fonte); // Defina a fonte e o tamanho
+            sourceInput.getLineNumbers().setFont(fonte);
         }
 
         //======== jScrollPane2 ========
@@ -308,18 +370,65 @@ public class MainWindow extends javax.swing.JFrame {
             console.setBackground(Color.decode("#dd9830"));
         }
 
+        //======== jScrollPane3 ========
+        {
+
+            //---- console2 ----
+            console2.setEditable(false);
+            console2.setColumns(20);
+            console2.setLineWrap(true);
+            console2.setRows(5);
+            console2.setTabSize(4);
+            jScrollPane3.setViewportView(console2);
+            console2.setBackground(Color.decode("#dd9830"));
+        }
+
         //---- buttonCompile ----
         buttonCompile.setIcon(new ImageIcon(getClass().getResource("/recursos/banana.png")));
-        buttonCompile.setText("<html><div style='margin-top:20px;'>Macacar</div></html>");
         buttonCompile.setHorizontalTextPosition(SwingConstants.CENTER);
-        buttonCompile.setVerticalTextPosition(SwingConstants.CENTER);
-        buttonCompile.setIconTextGap(900);
+        buttonCompile.setVerticalTextPosition(SwingConstants.TOP); // Coloca o texto acima do ícone
+        buttonCompile.setIconTextGap(-70); // Valor negativo move o texto para baixo, positivo move para cima
         buttonCompile.setContentAreaFilled(false);
         buttonCompile.setBorderPainted(false);
         buttonCompile.setFocusPainted(false);
         buttonCompile.setOpaque(false);
         buttonCompile.setForeground(Color.BLACK);
-        buttonCompile.setFont(customFont.deriveFont(Font.BOLD, 18));
+
+        try {
+            // Carrega a fonte do arquivo .ttf
+            InputStream fontStream = getClass().getResourceAsStream("/recursos/Fonts/LuckiestGuy-Regular.ttf");
+            if (fontStream != null) {
+                try {
+                    Font macacarFont = Font.createFont(Font.TRUETYPE_FONT, fontStream).deriveFont(20f); // Define o tamanho da fonte
+                    GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+                    ge.registerFont(macacarFont);
+
+                    buttonCompile.setFont(macacarFont);
+                    buttonCompile.setText("Macacar");
+                    System.out.println("Fonte carregada com sucesso!");
+                } catch (IOException | FontFormatException e) {
+                    System.err.println("Erro ao carregar a fonte: " + e.getMessage());
+                    e.printStackTrace();
+                    buttonCompile.setFont(new Font("Arial", Font.BOLD, 16)); //Fallback font
+                    buttonCompile.setText("Macacar");
+                } finally {
+                    try {
+                        fontStream.close(); // Ensure the stream is closed
+                    } catch (IOException e) {
+                        System.err.println("Erro ao fechar o stream da fonte: " + e.getMessage());
+                    }
+                }
+            } else {
+                System.err.println("Fonte não encontrada!");
+                buttonCompile.setFont(new Font("Arial", Font.BOLD, 16)); //Fallback font
+                buttonCompile.setText("Macacar");
+            }
+        } catch (Exception e) {
+            System.err.println("Erro geral ao carregar a fonte: " + e.getMessage());
+            e.printStackTrace();
+            buttonCompile.setFont(new Font("Arial", Font.BOLD, 16)); //Fallback font
+            buttonCompile.setText("Macacar");
+        }
         buttonCompile.addActionListener(e -> buttonCompileActionPerformed(e));
 
         GroupLayout contentPaneLayout = new GroupLayout(contentPane);
@@ -331,7 +440,9 @@ public class MainWindow extends javax.swing.JFrame {
                     .addGroup(contentPaneLayout.createParallelGroup()
                         .addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE)
                         .addGroup(contentPaneLayout.createSequentialGroup()
-                            .addComponent(jScrollPane2)
+                            .addGroup(contentPaneLayout.createParallelGroup()
+                                .addComponent(jScrollPane2)
+                                .addComponent(jScrollPane3)) // Adicionado o novo console
                             .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                             .addComponent(sidePanel, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE))
                         .addGroup(contentPaneLayout.createSequentialGroup()
@@ -350,17 +461,19 @@ public class MainWindow extends javax.swing.JFrame {
                     .addComponent(labelTabelaSimbolos)
                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                     .addComponent(simbolosScrollPane, GroupLayout.DEFAULT_SIZE, 200, Short.MAX_VALUE)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                     .addGroup(contentPaneLayout.createParallelGroup()
-                        .addComponent(jScrollPane2, GroupLayout.PREFERRED_SIZE, 100, GroupLayout.PREFERRED_SIZE)
+                        .addGroup(contentPaneLayout.createSequentialGroup()
+                            .addComponent(jScrollPane2, GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE)
+                            .addComponent(jScrollPane3, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addComponent(sidePanel))
                     .addContainerGap())
         );
         pack();
+        setSize(1320, 800);
         setLocationRelativeTo(getOwner());
     }// </editor-fold>//GEN-END:initComponents
 
-    private void buttonCompileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonCompileActionPerformed
+    private void buttonCompileActionPerformed(java.awt.event.ActionEvent evt) {
         Lexico lex = new Lexico();
         Sintatico sint = new Sintatico();
         Semantico sem = new Semantico();
@@ -371,28 +484,32 @@ public class MainWindow extends javax.swing.JFrame {
 
         // Limpar console e mensagens anteriores
         console.setText("");
+        console2.setText(""); // Limpa o segundo console também
 
         try {
             sint.parse(lex, sem);
             console.setText("Compilado com sucesso!\n");
-            
+            console2.setText(sem.getPontoData() + "\n" + sem.getPontoText() + "\n HLT 0"); // Envia o valor de ponto_data e ponto_text para o segundo console
+
             // Exibir a tabela de símbolos após compilação bem sucedida
             carregarTabelaSimbolos();
             simbolosScrollPane.setVisible(true);
             labelTabelaSimbolos.setVisible(true);
-            
+
             // Redimensionar a janela para acomodar a tabela
             setSize(1320, 800);
             revalidate();
             repaint();
-            
+
         } catch (LexicalError ex) {
             console.setText("Erro Léxico: " + ex.getLocalizedMessage());
+            console2.setText("Erro Léxico: " + ex.getLocalizedMessage()); // Envia a mensagem para o segundo console
             // Ocultar a tabela em caso de erro
             simbolosScrollPane.setVisible(false);
             labelTabelaSimbolos.setVisible(false);
         } catch (SyntacticError ex) {
             console.setText("Erro Sintático: " + ex.getLocalizedMessage());
+            console2.setText("Erro Sintático: " + ex.getLocalizedMessage()); // Envia a mensagem para o segundo console
             // Ocultar a tabela em caso de erro
             simbolosScrollPane.setVisible(false);
             labelTabelaSimbolos.setVisible(false);
@@ -406,6 +523,7 @@ public class MainWindow extends javax.swing.JFrame {
             }
 
             console.setText(errorMessage.toString()); // Define o texto do console de uma vez
+            console2.setText(errorMessage.toString()); // Define o texto do segundo console
 
             // Ocultar a tabela em caso de erro
             simbolosScrollPane.setVisible(false);
@@ -515,6 +633,8 @@ public class MainWindow extends javax.swing.JFrame {
     private LineNumberedTextArea sourceInput;
     private JScrollPane jScrollPane2;
     private JTextArea console;
+    private JScrollPane jScrollPane3; // Novo scrollpane para o novo console
+    private JTextArea console2; // Novo console
     private JButton buttonCompile;
     // Componentes adicionados para a tabela de símbolos
     private JScrollPane simbolosScrollPane;
