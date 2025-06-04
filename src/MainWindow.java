@@ -17,11 +17,56 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
 public class MainWindow extends javax.swing.JFrame {
+    
+    // Classe interna LineNumberedTextArea
+    private class LineNumberedTextArea extends JTextArea {
+        private JTextArea lineNumbers;
+        private static final int FONT_SIZE = 14; // Aumente este valor para uma fonte maior
+
+        public LineNumberedTextArea() {
+            super();
+            lineNumbers = new JTextArea("1");
+            lineNumbers.setBackground(Color.decode("#8B4513"));
+            lineNumbers.setForeground(Color.WHITE);
+            lineNumbers.setEditable(false);
+            lineNumbers.setFont(customFont.deriveFont(Font.PLAIN, FONT_SIZE));
+            
+            // Configura a fonte do editor principal
+            setFont(customFont.deriveFont(Font.PLAIN, FONT_SIZE));
+            
+            getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+                public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                    updateLineNumbers();
+                }
+                public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                    updateLineNumbers();
+                }
+                public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                    updateLineNumbers();
+                }
+            });
+        }
+
+        public JTextArea getLineNumbers() {
+            return lineNumbers;
+        }
+
+        private void updateLineNumbers() {
+            String text = getText();
+            int lines = text.split("\n").length;
+            StringBuilder numbers = new StringBuilder();
+            for (int i = 1; i <= lines; i++) {
+                numbers.append(i).append("\n");
+            }
+            lineNumbers.setText(numbers.toString());
+        }
+    }
 
     /**
      * Creates new form MainWindow
      */
     public MainWindow() {
+        loadCustomFont(); // Adicione esta linha no início do construtor
         initComponents();
         setSize(1320, 700);
         ImageIcon icon = new ImageIcon(getClass().getResource("/recursos/BenjaminPortrait32.png"));
@@ -109,6 +154,24 @@ public class MainWindow extends javax.swing.JFrame {
         // Inicialmente ocultar a tabela de símbolos
         simbolosScrollPane.setVisible(false);
         labelTabelaSimbolos.setVisible(false);
+        
+        loadCustomFont(); // Carregar a fonte personalizada
+    }
+
+    private Font customFont;
+
+    private void loadCustomFont() {
+        try {
+            // Carrega o arquivo TTF do diretório de recursos
+            customFont = Font.createFont(Font.TRUETYPE_FONT, 
+                getClass().getResourceAsStream("/recursos/fonts/LuckiestGuy-Regular.ttf"));
+            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+            ge.registerFont(customFont);
+        } catch (IOException | FontFormatException e) {
+            e.printStackTrace();
+            // Em caso de erro, usa uma fonte padrão
+            customFont = new Font("Monospaced", Font.PLAIN, 14);
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -116,7 +179,7 @@ public class MainWindow extends javax.swing.JFrame {
     // Generated using JFormDesigner Evaluation license - unknown
     private void initComponents() {
         jScrollPane1 = new JScrollPane();
-        sourceInput = new JTextArea();
+        sourceInput = new LineNumberedTextArea();
         jScrollPane2 = new JScrollPane();
         console = new JTextArea();
         buttonCompile = new JButton();
@@ -224,8 +287,12 @@ public class MainWindow extends javax.swing.JFrame {
             //---- sourceInput ----
             sourceInput.setColumns(20);
             sourceInput.setRows(5);
-            jScrollPane1.setViewportView(sourceInput);
+            JPanel editorPanel = new JPanel(new BorderLayout());
+            editorPanel.add(sourceInput.getLineNumbers(), BorderLayout.WEST);
+            editorPanel.add(sourceInput, BorderLayout.CENTER);
+            jScrollPane1.setViewportView(editorPanel);
             sourceInput.setBackground(Color.decode("#dd9830"));
+            sourceInput.setFont(customFont.deriveFont(Font.PLAIN, 18)); // Aumentado para 18
         }
 
         //======== jScrollPane2 ========
@@ -246,13 +313,13 @@ public class MainWindow extends javax.swing.JFrame {
         buttonCompile.setText("<html><div style='margin-top:20px;'>Macacar</div></html>");
         buttonCompile.setHorizontalTextPosition(SwingConstants.CENTER);
         buttonCompile.setVerticalTextPosition(SwingConstants.CENTER);
-        buttonCompile.setIconTextGap(900); // Aumente o valor para descer mais, diminua para subir
+        buttonCompile.setIconTextGap(900);
         buttonCompile.setContentAreaFilled(false);
         buttonCompile.setBorderPainted(false);
         buttonCompile.setFocusPainted(false);
         buttonCompile.setOpaque(false);
-        buttonCompile.setForeground(Color.BLACK); // Cor do texto
-        buttonCompile.setFont(new Font("Arial", Font.BOLD, 18)); // Fonte e tamanho
+        buttonCompile.setForeground(Color.BLACK);
+        buttonCompile.setFont(customFont.deriveFont(Font.BOLD, 18));
         buttonCompile.addActionListener(e -> buttonCompileActionPerformed(e));
 
         GroupLayout contentPaneLayout = new GroupLayout(contentPane);
@@ -445,7 +512,7 @@ public class MainWindow extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // Generated using JFormDesigner Evaluation license - unknown
     private JScrollPane jScrollPane1;
-    private JTextArea sourceInput;
+    private LineNumberedTextArea sourceInput;
     private JScrollPane jScrollPane2;
     private JTextArea console;
     private JButton buttonCompile;
