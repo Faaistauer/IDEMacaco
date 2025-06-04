@@ -106,6 +106,13 @@ public class Semantico {
     // Geração de código
     private static String ponto_data = ".data\n";
     private static String ponto_text = ".text\nJMP _main";
+
+    public String getPontoText() {
+        return ponto_text;
+    }
+    public String getPontoData() {
+        return ponto_data;
+    }
     private static String entrada_saida_dado = "";
     private static Stack<String> pilha_operador = new Stack<>();
     private static String operador_relacional = "";
