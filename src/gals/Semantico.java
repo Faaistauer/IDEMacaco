@@ -317,10 +317,6 @@ public class Semantico {
                         ponto_text += "\nLD $in_port";
                         ponto_text += "\nSTO " + str;
                         entrada_saida_dado = "";
-                    } else if (entrada_saida_dado.equals("SAIDA")) {
-                        ponto_text += "\nLD " + str;
-                        ponto_text += "\nSTO $out_port";
-                        entrada_saida_dado = "";
                     }
 
                     if (recebe_atrib.equals("")) {
