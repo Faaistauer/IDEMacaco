@@ -379,8 +379,7 @@ public class Semantico {
                         }
                     }
                 }
-
-//                inicio_atribuicao = false;
+                inicio_atribuicao = false;
                 break;
 
             case 11:
@@ -480,6 +479,8 @@ public class Semantico {
                             }
                         }
                     }
+                } else {
+                    temp1 = true;
                 }
 
                 entrando_no_indice = false;
@@ -514,7 +515,7 @@ public class Semantico {
                 } else {
                     operador = "";
                 }
-
+                System.out.println("temp1 antes: " + temp1);
 
                 if (Objects.equals(str, ")")) {
                     break;
@@ -555,20 +556,15 @@ public class Semantico {
                         // Se for o primeiro valor numa expressão, armazena em registrador temporário.
                         if (temp1 == false && calculando_indice == false) {
                             ponto_text += "\nSTO 1000"; // Armazena em R1000 (registrador temporário).
-                            temp1 = true; // Marca R1000 como ocupado.
+                            if(entrando_no_indice) {
+                                temp1 = true; // Marca R1000 como ocupado.
+                            }
                         }
                     }
-                    // A lógica de 'chamada_nome' e 'vetor_tamanho' que estava aqui anteriormente
-                    // precisa ser reavaliada se ela se aplica a *todos* os literais ou apenas a contextos específicos.
-                    // Se aplica apenas a contextos específicos (e.g., argumentos de função ou tamanhos de vetor),
-                    // é melhor movê-la para o case que lida com esses contextos.
-                    // Mantenho as flags de índice para consistência:
+
                     entrando_no_indice = false; // Garante que a flag de índice é resetada.
 
                 }
-                // --- Blocos para Operadores Binários (SOMA, SUBTRACAO, MULTIPLICACAO, etc.) ---
-                // Estes blocos são acionados quando 'str' é o segundo operando de uma operação,
-                // e o operador correspondente está no topo da pilha_operador.
                 else if (operador.equals("SOMA")) {
                     pilha_constantes.push(str); // Empilha o segundo operando (string).
 
@@ -585,7 +581,6 @@ public class Semantico {
                     int tipoOperando1 = stringParaTipo(verificaTipo(operando1Str));
 
                     // Desempilha o operador (ele já foi 'peeked' no início do case).
-                    pilha_operador.pop(); // Remove "SOMA" da pilha.
 
                     // Valida a operação de soma usando resultType.
                     int tipoResultanteDaOperacao = resultType(tipoOperando1, tipoOperando2, SUM); // Assume SUM é sua constante para soma.
@@ -600,9 +595,16 @@ public class Semantico {
                     // Geração de Código para a SOMA.
                     if (escrever_text) {
                         // Presume que o primeiro operando (resultante de subexpressão anterior) está em R1000.
-                        ponto_text += "\nLD 1000"; // Carrega o valor do primeiro operando.
-                        ponto_text += "\nADDI " + operando2Str; // Adiciona o segundo operando (literal).
-                        ponto_text += "\nSTO 1000"; // Armazena o resultado da soma de volta em R1000.
+                        if (entrando_no_indice) {
+                            ponto_text += "\nLDI " + operando2Str; // Carrega o primeiro operando (literal)
+                            temp1 = true;
+                            inicio_atribuicao = false;
+                        } else {
+                            ponto_text += "\nLD 1000"; // Carrega o valor do primeiro operando.
+                            ponto_text += "\nADDI " + operando2Str; // Adiciona o segundo operando (literal).
+                            ponto_text += "\nSTO 1000"; // Armazena o resultado da soma de volta em R1000.
+                        }
+
                     }
                     entrando_no_indice = false; // Reseta flag de índice.
                     // `temp1` não é resetada aqui, pois 1000 ainda contém um valor temporário (o resultado da soma).
@@ -619,7 +621,6 @@ public class Semantico {
                     int tipoOperando2 = stringParaTipo(verificaTipo(operando2Str));
                     int tipoOperando1 = stringParaTipo(verificaTipo(operando1Str));
 
-                    pilha_operador.pop(); // Remove "SUBTRACAO".
 
                     int tipoResultanteDaOperacao = resultType(tipoOperando1, tipoOperando2, SUB); // Assume SUB.
 
@@ -631,9 +632,15 @@ public class Semantico {
 
                     // Geração de Código para a SUBTRACAO.
                     if (escrever_text) {
-                        ponto_text += "\nLD 1000";
-                        ponto_text += "\nSUBI " + operando2Str;
-                        ponto_text += "\nSTO 1000";
+                        if (entrando_no_indice) {
+                            ponto_text += "\nLDI " + operando2Str; // Carrega o primeiro operando (literal)
+                            temp1 = true;
+                            inicio_atribuicao = false;
+                        } else {
+                            ponto_text += "\nLD 1000"; // Carrega o valor do primeiro operando.
+                            ponto_text += "\nSUBI " + operando2Str; // Adiciona o segundo operando (literal).
+                            ponto_text += "\nSTO 1000"; // Armazena o resultado da soma de volta em R1000.
+                        }
                     }
                     entrando_no_indice = false;
 
@@ -739,148 +746,53 @@ public class Semantico {
                     entrando_no_indice = false;
 
                 }
-//                else if (operador.equals("AND")) {
-//                    pilha_constantes.push(str); // Empilha o segundo operando.
-//
-//                    if (pilha_constantes.size() < 2) {
-//                        throw new SemanticError("Erro semântico: Operandos insuficientes para a operação AND.");
-//                    }
-//                    String operando2Str = pilha_constantes.pop();
-//                    String operando1Str = pilha_constantes.pop();
-//
-//                    int tipoOperando2 = stringParaTipo(verificaTipo(operando2Str));
-//                    int tipoOperando1 = stringParaTipo(verificaTipo(operando1Str));
-//
-//                    pilha_operador.pop(); // Remove "AND".
-//
-//                    int tipoResultanteDaOperacao = resultType(tipoOperando1, tipoOperando2, AND); // Assume AND.
-//
-//                    if (tipoResultanteDaOperacao == ERR) {
-//                        throw new SemanticError("Erro de tipo: Operação 'AND' inválida entre " +
-//                                nomeTipo(tipoOperando1) + " e " + nomeTipo(tipoOperando2) + ".");
-//                    }
-//                    pilha_tipos.push(tipoResultanteDaOperacao);
-//
-//                    // Geração de Código para o AND.
-//                    if (escrever_text) {
-//                        ponto_text += "\nLD 1000";
-//                        ponto_text += "\nANDI " + operando2Str;
-//                        ponto_text += "\nSTO 1000";
-//                    }
-//                    entrando_no_indice = false;
-//
-//                } else if (operador.equals("OR_BIT")) {
-//                    pilha_constantes.push(str); // Empilha o segundo operando.
-//
-//                    if (pilha_constantes.size() < 2) {
-//                        throw new SemanticError("Erro semântico: Operandos insuficientes para a operação OR_BIT.");
-//                    }
-//                    String operando2Str = pilha_constantes.pop();
-//                    String operando1Str = pilha_constantes.pop();
-//
-//                    int tipoOperando2 = stringParaTipo(verificaTipo(operando2Str));
-//                    int tipoOperando1 = stringParaTipo(verificaTipo(operando1Str));
-//
-//                    pilha_operador.pop(); // Remove "OR_BIT".
-//
-//                    int tipoResultanteDaOperacao = resultType(tipoOperando1, tipoOperando2, OR); // Assume OR.
-//
-//                    if (tipoResultanteDaOperacao == ERR) {
-//                        throw new SemanticError("Erro de tipo: Operação 'OR_BIT' inválida entre " +
-//                                nomeTipo(tipoOperando1) + " e " + nomeTipo(tipoOperando2) + ".");
-//                    }
-//                    pilha_tipos.push(tipoResultanteDaOperacao);
-//
-//                    // Geração de Código para o OR_BIT.
-//                    if (escrever_text) {
-//                        ponto_text += "\nLD 1000";
-//                        ponto_text += "\nORI " + operando2Str;
-//                        ponto_text += "\nSTO 1000";
-//                    }
-//                    entrando_no_indice = false;
-//
-//                } else if (operador.equals("XOR_BIT")) {
-//                    pilha_constantes.push(str); // Empilha o segundo operando.
-//
-//                    if (pilha_constantes.size() < 2) {
-//                        throw new SemanticError("Erro semântico: Operandos insuficientes para a operação XOR_BIT.");
-//                    }
-//                    String operando2Str = pilha_constantes.pop();
-//                    String operando1Str = pilha_constantes.pop();
-//
-//                    int tipoOperando2 = stringParaTipo(verificaTipo(operando2Str));
-//                    int tipoOperando1 = stringParaTipo(verificaTipo(operando1Str));
-//
-//                    pilha_operador.pop(); // Remove "XOR_BIT".
-//
-//                    int tipoResultanteDaOperacao = resultType(tipoOperando1, tipoOperando2, XOR); // Assume XOR.
-//
-//                    if (tipoResultanteDaOperacao == ERR) {
-//                        throw new SemanticError("Erro de tipo: Operação 'XOR_BIT' inválida entre " +
-//                                nomeTipo(tipoOperando1) + " e " + nomeTipo(tipoOperando2) + ".");
-//                    }
-//                    pilha_tipos.push(tipoResultanteDaOperacao);
-//
-//                    // Geração de Código para o XOR_BIT.
-//                    if (escrever_text) {
-//                        ponto_text += "\nLD 1000";
-//                        ponto_text += "\nXORI " + operando2Str;
-//                        ponto_text += "\nSTO 1000";
-//                    }
-//                    entrando_no_indice = false;
-//
-//                } else if (operador.equals("NOT")) { // Operador Unário
-//                    // NOT é unário, opera no 'str' atual (o único operando).
-//                    // Não desempilha da pilha_constantes ou espera outro operando.
-//                    int tipoOperando = stringParaTipo(verificaTipo(str)); // Tipo do operando.
-//                    if (tipoOperando == ERR) {
-//                        Simbolo simboloIdentificador = null;
-//                        for (Simbolo s : lista_simbolos) {
-//                            if (s.nome.equals(str) && verifica_escopo(s.escopo)) {
-//                                simboloIdentificador = s;
-//                                break;
-//                            }
-//                        }
-//                        if (simboloIdentificador != null) {
-//                            tipoOperando = stringParaTipo(simboloIdentificador.tipo);
-//                        } else {
-//                            throw new SemanticError("Erro semântico: Operando '" + str + "' para 'NOT' não reconhecido.");
-//                        }
-//                    }
-//
-//                    // Remove o operador "NOT" da pilha.
-//                    pilha_operador.pop();
-//
-//                    // A resultType para unários é geralmente uma função separada ou uma sobrecarga.
-//                    // Se sua resultType lida com um operando nulo para unários, use-a.
-//                    // Caso contrário, implemente a lógica de tipo diretamente.
-//                    int tipoResultante = ERR;
-//                    if (tipoOperando == BOO) { // NOT lógico em booleano
-//                        tipoResultante = BOO;
-//                    } else if (tipoOperando == INT) { // NOT bit-a-bit em inteiro
-//                        tipoResultante = INT;
-//                    } else {
-//                        throw new SemanticError("Erro de tipo: Operação 'NOT' inválida para o tipo " + nomeTipo(tipoOperando) + ".");
-//                    }
-//                    pilha_tipos.push(tipoResultante);
-//
-//                    // Geração de Código para o NOT.
-//                    if (escrever_text) {
-//                        ponto_text += "\nLDI " + str; // Carrega o operando.
-//                        ponto_text += "\nNOT_INST"; // Assumindo instrução NOT_INST.
-//                        ponto_text += "\nSTO 1000";
-//                        temp1 = true; // 1000 contém o resultado.
-//                    }
-//                    entrando_no_indice = false;
-//
-//                }
+                else if (operador == "AND") {
+                    if (escrever_text) {
+                        if (temp1 == true) {
+                            ponto_text += "\nLD 1000";
+                            ponto_text += "\nANDI " + str;
+                            ponto_text += "\nSTO 1000";
+
+                            pilha_operador.pop();
+                        }
+                    }
+                }
+                else if (operador == "OR_BIT") {
+                    if (escrever_text) {
+                        if (temp1 == true) {
+                            ponto_text += "\nLD 1000";
+                            ponto_text += "\nORI " + str;
+                            ponto_text += "\nSTO 1000";
+
+                            pilha_operador.pop();
+                        }
+                    }
+                }
+                else if (operador == "XOR_BIT") {
+                    if (escrever_text) {
+                        if (temp1 == true) {
+                            ponto_text += "\nLD 1000";
+                            ponto_text += "\nXORI " + str;
+                            ponto_text += "\nSTO 1000";
+
+                            pilha_operador.pop();
+                        }
+                    }
+                }
+                else if (operador == "NOT") {
+                    if (escrever_text) {
+                        ponto_text += "\nNOT " + str;
+
+                        pilha_operador.pop();
+                    }
+                }
                 else if (operador.equals("MAIOR") || operador.equals("MENOR") || operador.equals("MAIOR_IGUAL") ||
                         operador.equals("MENOR_IGUAL") || operador.equals("IGUAL") || operador.equals("DIFERENTE")) {
                     pilha_constantes.push(str); // Empilha o segundo operando.
 
-                    if (pilha_constantes.size() < 2) {
-                        throw new SemanticError("Erro semântico: Operandos insuficientes para a operação relacional.");
-                    }
+//                    if (pilha_constantes.size() < 2) {
+//                        throw new SemanticError("Erro semântico: Operandos insuficientes para a operação relacional.");
+//                    }
                     String operando2Str = pilha_constantes.pop();
                     String operando1Str = pilha_constantes.pop();
 
@@ -920,9 +832,7 @@ public class Semantico {
                     calculando_indice = false;
                     vetor_tamanho = Integer.parseInt(str);
                 }
-                // A flag 'inicio_atribuicao' deve ser gerenciada em um ponto mais alto,
-                // geralmente onde a atribuição como um todo e reconhecida e concluída (ex: case 25)
-                // Removi a linha 'inicio_atribuicao = false;' daqui.
+                System.out.println("temp1 antes: " + temp1);
                 break;
 
 
@@ -941,14 +851,15 @@ public class Semantico {
                 } else {
                     operador = "";
                 }
-
+                System.out.println("temp1 antes: " + temp1);
                 // Caso seja o primeiro valor da expressão
                 if (temp1 == false) {
-                    ponto_text += "\nSTO 1000";
+//                    ponto_text += "\nSTO 1000";
                     temp1 = true;
                 }
                 // Caso tenha um operador pendente e um valor já armazenado
                 else if (temp1 == true && !operador.equals("")) {
+                    ponto_text += "\nLD " + str;
                     ponto_text += "\nSTO 1001";
                     ponto_text += "\nLD 1000";
 
@@ -964,17 +875,8 @@ public class Semantico {
                 }
                 // Caso seja uma atribuição final
                 else if (temp1 == true && operador.equals("")) {
-                    // *** INÍCIO DA VALIDAÇÃO E ATRIBUIÇÃO ADICIONADAS ***
-
-                    // Validação de compatibilidade de tipos para atribuição final
-                    // Assume que o último símbolo adicionado é a variável de destino
-
-
-
-                    // Validação: Pega a última variável da lista_simb_aux
                     Simbolo varDestinoAtribuicao = null;
                     if (!lista_simb_aux.isEmpty()) {
-                        // Pega o ÚLTIMO símbolo da lista_simb_aux
                         varDestinoAtribuicao = lista_simb_aux.get(lista_simb_aux.size() - 1);
                     } else {
                         throw new SemanticError("Erro semântico: Variável de destino da atribuição não encontrada na lista auxiliar.");
@@ -986,9 +888,6 @@ public class Semantico {
                     if (pilha_tipos.isEmpty()) {
                         throw new SemanticError("Erro semântico: Tipo da expressão a ser atribuída não encontrado na pilha de tipos.");
                     }
-
-                    System.out.println("tipoDestino: " + tipoDestino);
-                    System.out.println("tipoExpressao: " + tipoExpressao);
 
                     int validacao = atribType(tipoDestino, tipoExpressao);
 
@@ -1003,12 +902,18 @@ public class Semantico {
                     }
 
                     // Geração de código da atribuição usando o último símbolo como destino
-                    if (escrever_text) {
-                        ponto_text += "\nLD 1000 "; // Carrega o resultado da expressão (lado direito)
-                        ponto_text += "\nSTO " + varDestinoAtribuicao.nome; // Armazena na variável de destino
-                    }
-                    temp1 = false; // Libera o registrador temporário R1000
+                    if (entrando_no_indice) {
+                        ponto_text += "\nLD 1000";
 
+                        if (parametro_aux.equals("") || parametro_aux.equals("main")) {
+                            ponto_text += "\nSTO " + varDestinoAtribuicao.nome;
+                        } else {
+                            ponto_text += "\nSTO " + parametro_aux + "_" + varDestinoAtribuicao.nome;
+
+                        }
+                        System.out.println("temp1 antes: " + temp1);
+                        temp1 = false; // Libera o registrador temporário R1000
+                    }
                     // Limpa as pilhas após a atribuição completa
                     while (!pilha_tipos.empty()) {
                         pilha_tipos.pop();
@@ -1028,9 +933,6 @@ public class Semantico {
                 String tipoUltimoSimbolo = ultimoSimbolo.tipo; // Tipo da variável que está recebendo a atribuição
 
                 int tipoDestino = stringParaTipo(tipoUltimoSimbolo); // Converte para o código de tipo
-
-                System.out.println("tipoDestino: " + tipoDestino);
-                System.out.println("tipoExpressao: " + tipoExpressao);
 
                 int validacao = atribType(tipoDestino, tipoExpressao);
 
@@ -1078,7 +980,7 @@ public class Semantico {
                 if (temp3 == true) {
                     ponto_text += "\nLD 1002";
                     ponto_text += "\nSTO $indr";
-
+                    System.out.println("temp1 " + temp1);
                     if (temp1 == true) {
                         ponto_text += "\nLD 1000";
                         ponto_text += "\nSTOV " + simb_aux.nome;
@@ -1110,13 +1012,15 @@ public class Semantico {
                 }
 
                 simb_aux = lista_simb_aux.get(lista_simb_aux.size() - 1);
-
+                System.out.println("inicio_atribuicao " + inicio_atribuicao);
                 if (inicio_atribuicao == false) {
+                    System.out.println("Entrou aqui");
                     ponto_text += "\nSTO $indr";
                     ponto_text += "\nLDV " + simb_aux.nome;
                 }
-
                 if (inicio_atribuicao == false) {
+                    System.out.println("Entrou ali");
+                    System.out.println("temp1 " + temp1);
                     if (temp1 == false) {
                         ponto_text += "\nSTO 1000";
                         temp1 = true;
@@ -1125,6 +1029,7 @@ public class Semantico {
                         temp2 = true;
 
                         ponto_text += "\nLD 1000";
+                        System.out.println("operador " + operador);
                         if (operador.equals("SOMA")) {
                             ponto_text += "\nADD 1001";
                             ponto_text += "\nSTO 1000";
