@@ -92,7 +92,7 @@ public class MainWindow extends javax.swing.JFrame {
     public MainWindow() {
        
         initComponents();
-        setSize(1320, 700);
+        setSize(500, 700);
         ImageIcon icon = new ImageIcon(getClass().getResource("/recursos/BenjaminPortrait32.png"));
         setIconImage(icon.getImage());
 
@@ -469,7 +469,7 @@ public class MainWindow extends javax.swing.JFrame {
                     .addContainerGap())
         );
         pack();
-        setSize(1320, 800);
+        setSize(500, 700);
         setLocationRelativeTo(getOwner());
     }// </editor-fold>//GEN-END:initComponents
 
@@ -497,7 +497,7 @@ public class MainWindow extends javax.swing.JFrame {
             labelTabelaSimbolos.setVisible(true);
 
             // Redimensionar a janela para acomodar a tabela
-            setSize(1320, 800);
+            setSize(500, 700);
             revalidate();
             repaint();
 
@@ -532,6 +532,8 @@ public class MainWindow extends javax.swing.JFrame {
     }
 
     private void carregarTabelaSimbolos() {
+        Semantico sem = new Semantico();
+        
         try {
             // Limpar a tabela antes de carregar novos dados
             DefaultTableModel modelo = (DefaultTableModel) tabelaSimbolos.getModel();
@@ -565,6 +567,10 @@ public class MainWindow extends javax.swing.JFrame {
                 // Adicionar avisos sobre variáveis não utilizadas
                 if (!usado) {
                     console.append("(Aviso) Variável '" + nome + "' não está sendo usada\n");
+                }
+                
+                if (sem.getPontoTextWarErr() != null) {
+                    console.append(sem.getPontoTextWarErr() + "\n");
                 }
                 
                 // Adicionar linha à tabela

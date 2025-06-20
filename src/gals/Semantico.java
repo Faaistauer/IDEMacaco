@@ -106,12 +106,16 @@ public class Semantico {
     // Geração de código
     private static String ponto_data = ".data\n";
     private static String ponto_text = ".text\nJMP _main";
+    private static String ponto_text_war_err = "";
 
     public String getPontoText() {
         return ponto_text;
     }
     public String getPontoData() {
         return ponto_data;
+    }
+    public String getPontoTextWarErr() {
+        return ponto_text_war_err;
     }
     private static String entrada_saida_dado = "";
     private static Stack<String> pilha_operador = new Stack<>();
@@ -131,6 +135,8 @@ public class Semantico {
     private static String chamada_nome = "";
     private static String retorno = "";
     private static int conta_parm = 0;
+    private static boolean era_vetor = false;
+
 
     private static boolean verifica_escopo(int simb_escopo) {
         // Percorre o vetor procurando pelo valor
@@ -152,6 +158,18 @@ public class Semantico {
             }
         }
         return false;
+    }
+
+    private static String get_simbolo(String nome) {
+        // Iterando pela lista
+        for (Simbolo s : lista_simbolos) {
+            if (s.nome.equals(nome)) {
+                if (verifica_escopo(s.escopo)) {
+                    return s.tipo;
+                }
+            }
+        }
+        return "";
     }
 
     private static boolean procura_simbolo(String nome, boolean funcao) {
@@ -235,7 +253,7 @@ public class Semantico {
         for (Simbolo s : lista_simbolos) {
             // Verifica se a variável já foi declarada no mesmo escopo
             if (simb.nome.equals(s.nome) && simb.escopo == s.escopo) {
-                throw new SemanticError("Variavel ja declarada no escopo atual.");
+                ponto_text_war_err += "Variavel " +s.nome+ " ja declarada no escopo atual.\n" ;
             }
         }
         lista_simbolos.add(simb);
@@ -281,7 +299,7 @@ public class Semantico {
 
                     lista_simb_aux.add(simb); //coloca na lista para caso chegar na action #10, marcar como inicializado
                 } else {
-                    throw new SemanticError("Tipo nao declarado.");
+                    ponto_text_war_err += "Tipo de " +str+ " nao declarado. \n";
                 }
                 break;
 
@@ -303,7 +321,7 @@ public class Semantico {
 
             case 4:
                 if (procura_simbolo(str) == false) {
-                    throw new SemanticError("Variavel nao declarada.");
+                    ponto_text_war_err += "Tipo de " +str+ " nao declarado. \n";
                 } else {
                     // Encontra o símbolo na tabela e armazena seu tipo
                     for (Simbolo s : lista_simbolos) {
@@ -336,7 +354,7 @@ public class Semantico {
 
             case 5:
                 if (procura_simbolo(str, true) == false) {
-                    throw new SemanticError("Funcao nao declarada.");
+                    ponto_text_war_err += "Funcao nao declarado.";
                 } else {
                     chamada_nome = str;
                 }
@@ -350,7 +368,7 @@ public class Semantico {
                     simb.funcao = true;
                     insere_na_tabela(simb);
                 } else {
-                    throw new SemanticError("Tipo nao declarado.");
+                    ponto_text_war_err += "Tipo de " +str+ " nao declarado.";
                 }
 
                 parametro_aux = str;
@@ -391,7 +409,7 @@ public class Semantico {
 
             case 11:
 
-                if(tipoExpressao != expr_type) throw new SemanticError("Erro semântico: Tipo incompatível de indice, esperado macaque, recebido " + nomeTipo(tipoExpressao));
+                if(tipoExpressao != expr_type)ponto_text_war_err += "Tipo incompatível de indice, esperado macaque, recebido " + nomeTipo(tipoExpressao) + ".\n";
 
                 for (Simbolo i : lista_simb_aux) {
                     for (Simbolo s : lista_simbolos) {
@@ -438,9 +456,9 @@ public class Semantico {
                             if (operacao != -1) {
                                 int resultadoTipo = resultType(tipo1, expr_type, operacao);
                                 if (resultadoTipo == ERR) {
-                                    throw new SemanticError("Incompatibilidade de tipos: operação " +
+                                    ponto_text_war_err += "Incompatibilidade de tipos: operação " +
                                             op + " entre " + nomeTipo(tipo1) +
-                                            " e " + nomeTipo(expr_type));
+                                            " e " + nomeTipo(expr_type) + ".\n";
                                 }
                                 // Atualiza o tipo resultante da expressão
                                 expr_type = resultadoTipo;
@@ -534,7 +552,7 @@ public class Semantico {
                     pilha_constantes.push(str); // Empilha o valor do literal/identificador (string).
 
                     // Determina o tipo semântico do literal/identificador e o empilha.
-                    int tipoAtual;
+                    int tipoAtual = 0;
                     String tipoNome = verificaTipo(str); // Tenta verificar como literal primeiro.
                     if (tipoNome.equals("erro")) { // Se não for um literal, procura na tabela de símbolos.
                         Simbolo simboloIdentificador = null;
@@ -548,25 +566,25 @@ public class Semantico {
                         if (simboloIdentificador != null) {
                             tipoAtual = stringParaTipo(simboloIdentificador.tipo);
                         } else {
-                            throw new SemanticError("Erro semântico: Identificador '" + str + "' não declarado ou reconhecido.");
+                            ponto_text_war_err += "Identificador '" + str + "' não declarado ou reconhecido. \n";
                         }
                     } else {
                         tipoAtual = stringParaTipo(tipoNome); // É um literal válido.
                     }
 
-                    System.out.println("tipoAtual: " + tipoAtual);
                     tipoExpressao = tipoAtual; // Empilha o tipo semântico.
 
                     // Geração de Código para carregar o literal/identificador.
                     if (escrever_text) {
                         ponto_text += "\nLDI " + str; // Carrega o valor imediato (literal).
+                        System.out.println("calculando_indice: " + calculando_indice + " case: " + action);
                         // Se for o primeiro valor numa expressão, armazena em registrador temporário.
-                        if (temp1 == false && calculando_indice == false) {
-                            ponto_text += "\nSTO 1000"; // Armazena em R1000 (registrador temporário).
-                            if(entrando_no_indice) {
-                                temp1 = true; // Marca R1000 como ocupado.
-                            }
-                        }
+                        // if (temp1 == false && calculando_indice == false) {
+                        //     ponto_text += "\nSTO 1000"; // Armazena em R1000 (registrador temporário).
+                        //     if(entrando_no_indice) {
+                        //         temp1 = true; // Marca R1000 como ocupado.
+                        //     }
+                        // }
                     }
 
                     entrando_no_indice = false; // Garante que a flag de índice é resetada.
@@ -576,42 +594,57 @@ public class Semantico {
                     pilha_constantes.push(str); // Empilha o segundo operando (string).
 
                     // Verifica se há operandos suficientes para a operação (pelo menos 2).
-                    if (pilha_constantes.size() < 2) {
-                        throw new SemanticError("Erro semântico: Operandos insuficientes para a operação SOMA.");
+                    String operando2Str;
+                    String operando1Str;
+                    int tipoOperando2;
+                    int tipoOperando1;
+                    int tipoResultanteDaOperacao;
+                    if (pilha_constantes.size() >= 2) {
+                        operando2Str = pilha_constantes.pop();
+                        operando1Str = pilha_constantes.pop();
+
+                        tipoOperando2 = stringParaTipo(verificaTipo(operando2Str));
+                        tipoOperando1 = stringParaTipo(verificaTipo(operando1Str));
+                        tipoResultanteDaOperacao = resultType(tipoOperando1, tipoOperando2, SUM);
+                    } else {
+                        operando2Str = pilha_constantes.pop();
+
+                        tipoOperando2 = stringParaTipo(verificaTipo(operando2Str));
+                        Simbolo ultimoSimbolo = lista_simbolos.get(lista_simbolos.size() - 1);
+                        tipoOperando1 = stringParaTipo(ultimoSimbolo.tipo);
+                        tipoResultanteDaOperacao = resultType(tipoOperando1, tipoOperando2, SUM);
                     }
-                    // Desempilha os valores (strings) dos dois operandos.
-                    String operando2Str = pilha_constantes.pop();
-                    String operando1Str = pilha_constantes.pop();
-
-                    // Converte os valores dos operandos para seus tipos semânticos.
-                    int tipoOperando2 = stringParaTipo(verificaTipo(operando2Str));
-                    int tipoOperando1 = stringParaTipo(verificaTipo(operando1Str));
-
-                    // Desempilha o operador (ele já foi 'peeked' no início do case).
 
                     // Valida a operação de soma usando resultType.
-                    int tipoResultanteDaOperacao = resultType(tipoOperando1, tipoOperando2, SUM); // Assume SUM é sua constante para soma.
+                     // Assume SUM é sua constante para soma.
 
                     if (tipoResultanteDaOperacao == ERR) {
-                        throw new SemanticError("Erro de tipo: Operação 'SOMA' inválida entre " +
-                                nomeTipo(tipoOperando1) + " e " + nomeTipo(tipoOperando2) + ".");
+                        ponto_text_war_err += "Erro de tipo: Operação 'SOMA' inválida entre " +
+                                nomeTipo(tipoOperando1) + " e " + nomeTipo(tipoOperando2) + ".\n";
                     }
 
                     tipoExpressao = tipoResultanteDaOperacao; // Empilha o tipo resultante da operação.
 
                     // Geração de Código para a SOMA.
                     if (escrever_text) {
-                        // Presume que o primeiro operando (resultante de subexpressão anterior) está em R1000.
                         if (entrando_no_indice) {
+                            if(era_vetor == false) ponto_text += "\nSTO 1000";
                             ponto_text += "\nLDI " + operando2Str; // Carrega o primeiro operando (literal)
                             temp1 = true;
                             inicio_atribuicao = false;
-                        } else {
+                        } else if (calculando_indice == true && entrando_no_indice == false) {
+                            ponto_text += "\nADDI " + operando2Str;
+                            pilha_operador.pop();
+                        }
+                        else {
                             ponto_text += "\nLD 1000"; // Carrega o valor do primeiro operando.
                             ponto_text += "\nADDI " + operando2Str; // Adiciona o segundo operando (literal).
-                            ponto_text += "\nSTO 1000"; // Armazena o resultado da soma de volta em R1000.
+                            System.out.println("calculando_indice : " + calculando_indice);
+                            if(!calculando_indice) {
+                                ponto_text += "\nSTO 1000"; // Armazena o resultado da soma de volta em R1000.
+                            }
+                            pilha_operador.pop();
                         }
-
                     }
                     entrando_no_indice = false; // Reseta flag de índice.
                     // `temp1` não é resetada aqui, pois 1000 ainda contém um valor temporário (o resultado da soma).
@@ -619,34 +652,52 @@ public class Semantico {
                 } else if (operador.equals("SUBTRACAO")) {
                     pilha_constantes.push(str); // Empilha o segundo operando.
 
-                    if (pilha_constantes.size() < 2) {
-                        throw new SemanticError("Erro semântico: Operandos insuficientes para a operação SUBTRACAO.");
+                    String operando2Str;
+                    String operando1Str;
+                    int tipoOperando2;
+                    int tipoOperando1;
+                    int tipoResultanteDaOperacao;
+                    if (pilha_constantes.size() >= 2) {
+                        operando2Str = pilha_constantes.pop();
+                        operando1Str = pilha_constantes.pop();
+
+                        tipoOperando2 = stringParaTipo(verificaTipo(operando2Str));
+                        tipoOperando1 = stringParaTipo(verificaTipo(operando1Str));
+                        tipoResultanteDaOperacao = resultType(tipoOperando1, tipoOperando2, SUM);
+                    } else {
+                        operando2Str = pilha_constantes.pop();
+
+                        tipoOperando2 = stringParaTipo(verificaTipo(operando2Str));
+                        Simbolo ultimoSimbolo = lista_simbolos.get(lista_simbolos.size() - 1);
+                        tipoOperando1 = stringParaTipo(ultimoSimbolo.tipo);
+                        tipoResultanteDaOperacao = resultType(tipoOperando1, tipoOperando2, SUM);
                     }
-                    String operando2Str = pilha_constantes.pop();
-                    String operando1Str = pilha_constantes.pop();
-
-                    int tipoOperando2 = stringParaTipo(verificaTipo(operando2Str));
-                    int tipoOperando1 = stringParaTipo(verificaTipo(operando1Str));
-
-
-                    int tipoResultanteDaOperacao = resultType(tipoOperando1, tipoOperando2, SUB); // Assume SUB.
 
                     if (tipoResultanteDaOperacao == ERR) {
-                        throw new SemanticError("Erro de tipo: Operação 'SUBTRACAO' inválida entre " +
-                                nomeTipo(tipoOperando1) + " e " + nomeTipo(tipoOperando2) + ".");
+                        ponto_text_war_err += "Erro de tipo: Operação 'SUBTRACAO' inválida entre " +
+                                nomeTipo(tipoOperando1) + " e " + nomeTipo(tipoOperando2) + ".\n";
                     }
                     tipoExpressao = tipoResultanteDaOperacao;
 
                     // Geração de Código para a SUBTRACAO.
                     if (escrever_text) {
                         if (entrando_no_indice) {
+                            ponto_text += "\nSTO 1000";
                             ponto_text += "\nLDI " + operando2Str; // Carrega o primeiro operando (literal)
                             temp1 = true;
                             inicio_atribuicao = false;
-                        } else {
+                        } else if (calculando_indice == true && entrando_no_indice == false) {
+                            ponto_text += "\nSUBI " + operando2Str;
+                            pilha_operador.pop();
+                        }
+                        else {
                             ponto_text += "\nLD 1000"; // Carrega o valor do primeiro operando.
                             ponto_text += "\nSUBI " + operando2Str; // Adiciona o segundo operando (literal).
-                            ponto_text += "\nSTO 1000"; // Armazena o resultado da soma de volta em R1000.
+                            System.out.println("calculando_indice : " + calculando_indice);
+                            if(!calculando_indice) {
+                                ponto_text += "\nSTO 1000"; // Armazena o resultado da soma de volta em R1000.
+                            }
+                            pilha_operador.pop();
                         }
                     }
                     entrando_no_indice = false;
@@ -655,7 +706,7 @@ public class Semantico {
                     pilha_constantes.push(str); // Empilha o segundo operando.
 
                     if (pilha_constantes.size() < 2) {
-                        throw new SemanticError("Erro semântico: Operandos insuficientes para a operação MULTIPLICACAO.");
+                        ponto_text_war_err += "Erro semântico: Operandos insuficientes para a operação MULTIPLICACAO.\n";
                     }
                     String operando2Str = pilha_constantes.pop();
                     String operando1Str = pilha_constantes.pop();
@@ -668,8 +719,8 @@ public class Semantico {
                     int tipoResultanteDaOperacao = resultType(tipoOperando1, tipoOperando2, MUL); // Assume MUL.
 
                     if (tipoResultanteDaOperacao == ERR) {
-                        throw new SemanticError("Erro de tipo: Operação 'MULTIPLICACAO' inválida entre " +
-                                nomeTipo(tipoOperando1) + " e " + nomeTipo(tipoOperando2) + ".");
+                        ponto_text_war_err +="Erro de tipo: Operação 'MULTIPLICACAO' inválida entre " +
+                                nomeTipo(tipoOperando1) + " e " + nomeTipo(tipoOperando2) + ".\n";
                     }
                     tipoExpressao = tipoResultanteDaOperacao;
 
@@ -685,7 +736,7 @@ public class Semantico {
                     pilha_constantes.push(str); // Empilha o segundo operando.
 
                     if (pilha_constantes.size() < 2) {
-                        throw new SemanticError("Erro semântico: Operandos insuficientes para a operação DIVISAO.");
+                        ponto_text_war_err += "Erro semântico: Operandos insuficientes para a operação DIVISAO. \n";
                     }
                     String operando2Str = pilha_constantes.pop();
                     String operando1Str = pilha_constantes.pop();
@@ -704,8 +755,8 @@ public class Semantico {
                     int tipoResultanteDaOperacao = resultType(tipoOperando1, tipoOperando2, DIV); // Assume DIV.
 
                     if (tipoResultanteDaOperacao == ERR) {
-                        throw new SemanticError("Erro de tipo: Operação 'DIVISAO' inválida entre " +
-                                nomeTipo(tipoOperando1) + " e " + nomeTipo(tipoOperando2) + ".");
+                        ponto_text_war_err += "Erro de tipo: Operação 'DIVISAO' inválida entre " +
+                                nomeTipo(tipoOperando1) + " e " + nomeTipo(tipoOperando2) + ".\n";
                     }
                     tipoExpressao = tipoResultanteDaOperacao;
 
@@ -721,7 +772,7 @@ public class Semantico {
                     pilha_constantes.push(str); // Empilha o segundo operando.
 
                     if (pilha_constantes.size() < 2) {
-                        throw new SemanticError("Erro semântico: Operandos insuficientes para a operação RESTO.");
+                        ponto_text_war_err += "Erro semântico: Operandos insuficientes para a operação RESTO.\n";
                     }
                     String operando2Str = pilha_constantes.pop();
                     String operando1Str = pilha_constantes.pop();
@@ -739,8 +790,8 @@ public class Semantico {
                     int tipoResultanteDaOperacao = resultType(tipoOperando1, tipoOperando2, DIV); // Assume REM.
 
                     if (tipoResultanteDaOperacao == ERR) {
-                        throw new SemanticError("Erro de tipo: Operação 'RESTO' inválida entre " +
-                                nomeTipo(tipoOperando1) + " e " + nomeTipo(tipoOperando2) + ".");
+                        ponto_text_war_err += "Erro de tipo: Operação 'RESTO' inválida entre " +
+                                nomeTipo(tipoOperando1) + " e " + nomeTipo(tipoOperando2) + ".\n";
                     }
                     tipoExpressao = tipoResultanteDaOperacao;
 
@@ -814,8 +865,8 @@ public class Semantico {
                     int tipoResultanteDaOperacao = resultType(tipoOperando1, tipoOperando2, operacaoRelacional);
 
                     if (tipoResultanteDaOperacao == ERR) {
-                        throw new SemanticError("Erro de tipo: Operação '" + operador + "' inválida entre " +
-                                nomeTipo(tipoOperando1) + " e " + nomeTipo(tipoOperando2) + ".");
+                        ponto_text_war_err += "Erro de tipo: Operação '" + operador + "' inválida entre " +
+                                nomeTipo(tipoOperando1) + " e " + nomeTipo(tipoOperando2) + ".\n";
                     }
                     tipoExpressao = tipoResultanteDaOperacao; // O resultado de relacionais é BOOLEAN.
 
@@ -831,12 +882,9 @@ public class Semantico {
                     entrando_no_indice = false;
                 }
 
-                System.out.println("tipoExpressao: " + tipoExpressao + " valor str: " + str + " calculando_indice: " + calculando_indice);
                 if(calculando_indice == true && tipoExpressao != INT){
-                    calculando_indice = false;
-                    throw new SemanticError("Erro semântico: Índice de vetor deve ser do tipo inteiro.");
+                    ponto_text_war_err += "Erro semântico: Índice de vetor deve ser do tipo inteiro.\n";
                 } else if(calculando_indice == true && tipoExpressao == INT){
-                    calculando_indice = false;
                     vetor_tamanho = Integer.parseInt(str);
                 }
                 System.out.println("temp1 antes: " + temp1);
@@ -855,6 +903,7 @@ public class Semantico {
                 // Obtém o operador atual (se houver)
                 if (!pilha_operador.isEmpty()) {
                     operador = pilha_operador.peek();
+                    System.out.println("operador: " + operador);
                 } else {
                     operador = "";
                 }
@@ -886,26 +935,33 @@ public class Semantico {
                     if (!lista_simb_aux.isEmpty()) {
                         varDestinoAtribuicao = lista_simb_aux.get(lista_simb_aux.size() - 1);
                     } else {
-                        throw new SemanticError("Erro semântico: Variável de destino da atribuição não encontrada na lista auxiliar.");
+                        ponto_text_war_err += "Erro semântico: Variável de destino da atribuição não encontrada na lista auxiliar.\n";
                     }
 
                     int tipoDestino = stringParaTipo(varDestinoAtribuicao.tipo); // Converte para o código de tipo
 
                     // Obtém o tipo da expressão (resultado da subexpressão) do topo da pilha de tipos
                     if (pilha_tipos.isEmpty()) {
-                        throw new SemanticError("Erro semântico: Tipo da expressão a ser atribuída não encontrado na pilha de tipos.");
+                        ponto_text_war_err += "Erro semântico: Tipo da expressão a ser atribuída não encontrado na pilha de tipos.\n";
+                    }
+
+                    String simbAux = get_simbolo(str);
+                    int simbIntAux = stringParaTipo(simbAux);
+                    int varDestinoTipoInt = stringParaTipo(varDestinoAtribuicao.tipo);
+                    if (procura_simbolo(str) && (simbIntAux != varDestinoTipoInt)){
+                        tipoExpressao = tipoDestino;
                     }
 
                     int validacao = atribType(tipoDestino, tipoExpressao);
 
                     if (validacao == ERR) {
-                        throw new SemanticError("Incompatibilidade de tipos na atribuição. " +
+                        ponto_text_war_err += "Incompatibilidade de tipos na atribuição. " +
                                 "Não é possível atribuir uma expressão do tipo " + nomeTipo(tipoExpressao) +
-                                " para a variável " + varDestinoAtribuicao.nome + " de tipo " + nomeTipo(tipoDestino));
+                                " para a variável " + varDestinoAtribuicao.nome + " de tipo " + nomeTipo(tipoDestino) + ".\n";
                     } else if (validacao == WAR) {
-                        System.out.println("Aviso: Possível perda de dados na atribuição de uma expressão do tipo " +
+                        ponto_text_war_err += "Aviso: Possível perda de dados na atribuição de uma expressão do tipo " +
                                 nomeTipo(tipoExpressao) + " para a variável " + varDestinoAtribuicao.nome +
-                                " de tipo " + nomeTipo(tipoDestino));
+                                " de tipo " + nomeTipo(tipoDestino) + ".\n";
                     }
 
                     // Geração de código da atribuição usando o último símbolo como destino
@@ -940,23 +996,29 @@ public class Semantico {
                 String tipoUltimoSimbolo = ultimoSimbolo.tipo; // Tipo da variável que está recebendo a atribuição
 
                 int tipoDestino = stringParaTipo(tipoUltimoSimbolo); // Converte para o código de tipo
+                int validacao = ERR;
 
-                int validacao = atribType(tipoDestino, tipoExpressao);
+                if (procura_simbolo(str)){
+                    tipoExpressao = tipoDestino;
+                }
+                if(tipoExpressao != ERR){
+                    validacao = atribType(tipoDestino, tipoExpressao);
+                }
 
                 if(validacao == ERR) {
-                    throw new SemanticError("Incompatibilidade de tipos na atribuição. " +
+                    ponto_text_war_err += "Incompatibilidade de tipos na atribuição. " +
                             "Não é possível atribuir uma expressão do tipo " + nomeTipo(tipoExpressao) +
-                            " para a variável " + ultimoSimbolo.nome + " de tipo " + nomeTipo(tipoDestino));
+                            " para a variável " + ultimoSimbolo.nome + " de tipo " + nomeTipo(tipoDestino) + ".\n";
                 } else if(validacao == WAR) {
-                    System.out.println("Aviso: Possível perda de dados na atribuição de uma expressão do tipo " +
+                    ponto_text_war_err += "Aviso: Possível perda de dados na atribuição de uma expressão do tipo " +
                             nomeTipo(tipoExpressao) + " para a variável " + ultimoSimbolo.nome +
-                            " de tipo " + nomeTipo(tipoDestino));
+                            " de tipo " + nomeTipo(tipoDestino) + ".\n";
                 }
 
                 for (Simbolo i : lista_simb_aux) {
                     for (Simbolo s : lista_simbolos) {
                         if (s.nome.equals(i.nome) && s.escopo == i.escopo) {
-                            ponto_text += "\nLD 1000 ";
+//                            ponto_text += "\nLD 1000 ";
                             ponto_text += "\nSTO " + s.nome;
                             temp1 = false;
                             break;
@@ -1000,6 +1062,7 @@ public class Semantico {
                         temp1 = false;
                     }
                 }
+                era_vetor = false;
                 break;
 
             case 28:
@@ -1019,15 +1082,11 @@ public class Semantico {
                 }
 
                 simb_aux = lista_simb_aux.get(lista_simb_aux.size() - 1);
-                System.out.println("inicio_atribuicao " + inicio_atribuicao);
                 if (inicio_atribuicao == false) {
-                    System.out.println("Entrou aqui");
                     ponto_text += "\nSTO $indr";
                     ponto_text += "\nLDV " + simb_aux.nome;
                 }
                 if (inicio_atribuicao == false) {
-                    System.out.println("Entrou ali");
-                    System.out.println("temp1 " + temp1);
                     if (temp1 == false) {
                         ponto_text += "\nSTO 1000";
                         temp1 = true;
@@ -1049,6 +1108,7 @@ public class Semantico {
                             pilha_operador.pop();
                         }
                     }
+                    era_vetor=true;
                 }
                 break;
 
@@ -1353,7 +1413,7 @@ public class Semantico {
 
                     lista_simb_aux.add(simb); // coloca na lista para caso chegar na action #10, marcar como inicializado
                 } else {
-                    throw new SemanticError("Tipo nao declarado.");
+                    ponto_text_war_err += "Tipo nao declarado.\n";
                 }
                 break;
 
@@ -1386,11 +1446,11 @@ public class Semantico {
                 }
 
                 if (!chamada_nome.equals("main") && !funcao_existe) {
-                    throw new SemanticError("Funcao ou procedimento " + chamada_nome + " nao criada");
+                    ponto_text_war_err += "Funcao ou procedimento " + chamada_nome + " nao criada\n";
                 }
 
                 if (!chamada_nome.equals("main") && conta_parm != parametros_totais) {
-                    throw new SemanticError("Numero de parametros incorreto para " + chamada_nome);
+                    ponto_text_war_err += "Numero de parametros incorreto para " + chamada_nome + "\n";
                 }
 
                 conta_parm = 0;
