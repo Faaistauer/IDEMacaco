@@ -108,6 +108,7 @@ public class Semantico {
     private static String ponto_text = ".text\nJMP _main";
     private static String ponto_text_desvio_loop = "";
     private static String ponto_text_war_err = "";
+    private static String ponto_text_escopo = "";
 
     public String getPontoText() {
         return ponto_text;
@@ -139,6 +140,7 @@ public class Semantico {
     private static boolean era_vetor = false;
     private static boolean relacional = false;
     private static boolean in_relacional_loop = false;
+    private static boolean isEscopo = false;
 
     private static void escreverTexto(String texto, boolean isDesvioLoop) {
         if(isDesvioLoop){
@@ -394,6 +396,9 @@ public class Semantico {
                 break;
 
             case 8:
+                if (isEscopo) {
+                    in_relacional_loop = false;
+                }
                 escopo_cont++;
                 pilha_escopo.add(escopo_cont);
                 break;
@@ -485,7 +490,9 @@ public class Semantico {
                     operador = "";
                 }
 
-                if (operador.equals("")) {
+                if (operador.equals("") || operador.equals("MENOR") || operador.equals("MAIOR") ||
+                        operador.equals("MAIOR_IGUAL") || operador.equals("MENOR_IGUAL") ||
+                        operador.equals("IGUAL") || operador.equals("DIFERENTE")) {
                     if (parametro_aux.equals("") || parametro_aux.equals("main")) {
                         ponto_text_temp += "\nLD " + str;
                     } else {
@@ -521,7 +528,36 @@ public class Semantico {
                             }
                         }
                     }
-                } else {
+                    if(!operador.equals("")) pilha_operador.pop();
+                    lista_simb_aux.remove(lista_simb_aux.size() - 1);
+                } 
+                else if (operador == "SOMA") {
+                    System.out.println("SOMA temp1: " + temp1);
+                    if (temp1 == true) {
+                        ponto_text_temp += "\nLD 1000";
+                        ponto_text_temp += "\nADD " + str;
+                        ponto_text_temp += "\nSTO 1000";
+                    }
+                    else {
+                        ponto_text_temp += "\nADD " + str;
+                    }
+                    pilha_operador.pop();
+                    lista_simb_aux.remove(lista_simb_aux.size() - 1);
+                }
+                else if (operador == "SUBTRACAO") {
+                    if (temp1 == true) {
+                        ponto_text_temp += "\nLD 1000";
+                        ponto_text_temp += "\nSUB " + str;
+                        ponto_text_temp += "\nSTO 1000";
+                    }
+                    else {
+                        ponto_text_temp += "\nSUB " + str;
+
+                    }
+                    pilha_operador.pop();
+                    lista_simb_aux.remove(lista_simb_aux.size() - 1);
+                }
+                else {
                     temp1 = true;
                 }
 
@@ -596,9 +632,13 @@ public class Semantico {
                         
                         if (temp1 == false && calculando_indice == false) {
                             ponto_text_temp += "\nSTO 1000"; // Armazena em R1000 (registrador temporário).
-                            if(entrando_no_indice) {
-                                temp1 = true; // Marca R1000 como ocupado.
-                            }
+                            // if(entrando_no_indice) {
+                            //     temp1 = true; // Marca R1000 como ocupado.
+                            // }
+                            temp1 = true;
+                        } 
+                        else if (temp1 == true && calculando_indice == false) {
+                            ponto_text_temp += "\nSTO 1000"; // Armazena o valor em R1000.
                         }
                     }
 
@@ -762,18 +802,28 @@ public class Semantico {
                         operador.equals("MENOR_IGUAL") || operador.equals("IGUAL") || operador.equals("DIFERENTE")) {
                     pilha_constantes.push(str);
                     
-                    String operando2Str = pilha_constantes.pop();
-                    String operando1Str = pilha_constantes.pop();
+                    String operando2Str;
+                    String operando1Str;
+                    int tipoOperando2;
+                    int tipoOperando1;
+                    int tipoResultanteDaOperacao;
+                    if (pilha_constantes.size() >= 2) {
+                        operando2Str = pilha_constantes.pop();
+                        operando1Str = pilha_constantes.pop();
 
-                    int tipoOperando2 = stringParaTipo(verificaTipo(operando2Str));
-                    int tipoOperando1 = stringParaTipo(verificaTipo(operando1Str));
+                        tipoOperando2 = stringParaTipo(verificaTipo(operando2Str));
+                        tipoOperando1 = stringParaTipo(verificaTipo(operando1Str));
+                        tipoResultanteDaOperacao = resultType(tipoOperando1, tipoOperando2, REL);
+                    } else {
+                        operando2Str = pilha_constantes.pop();
 
-                    // Mapeia o operador relacional específico para o código de operação REL.
-                    int operacaoRelacional = REL; // Todas as comparações resultam em BOOLEAN.
+                        tipoOperando2 = stringParaTipo(verificaTipo(operando2Str));
+                        Simbolo ultimoSimbolo = lista_simbolos.get(lista_simbolos.size() - 1);
+                        tipoOperando1 = stringParaTipo(ultimoSimbolo.tipo);
+                        tipoResultanteDaOperacao = resultType(tipoOperando1, tipoOperando2, REL);
+                    }
 
                     pilha_operador.pop(); // Remove o operador relacional.
-
-                    int tipoResultanteDaOperacao = resultType(tipoOperando1, tipoOperando2, operacaoRelacional);
 
                     if (tipoResultanteDaOperacao == ERR) {
                         ponto_text_war_err += "Erro de tipo: Operação '" + operador + "' inválida entre " +
@@ -781,15 +831,11 @@ public class Semantico {
                     }
                     tipoExpressao = tipoResultanteDaOperacao; // O resultado de relacionais é BOOLEAN.
 
-                    // Geração de Código para Operadores Relacionais.
-//                    if (escrever_text) {
-//                        ponto_text_temp += "\nLD 1000"; // Carrega o primeiro operando.
-//                        ponto_text_temp += "\nSUBI " + operando2Str; // Subtrai o segundo para comparação.
-//                        ponto_text_temp += "\nSTO 1000"; // Armazena a diferença.
-//                        // Em seguida, você precisaria de instruções de salto condicional baseadas no resultado de 1000.
-//                        // Ex: BREQ (Branch if Equal), BRLT (Branch if Less Than), etc.
-//                        // Esta parte da geração de código é complexa e depende da sua VM.
-//                    }
+                   if (escrever_text) {
+                       ponto_text_temp += "\nLD 1000"; // Carrega o primeiro operando.
+                       ponto_text_temp += "\nSUBI " + operando2Str; // Subtrai o segundo para comparação.
+                       ponto_text_temp += "\nSTO 1000"; // Armazena a diferença.
+                   }
                     entrando_no_indice = false;
                 }
 
@@ -817,9 +863,9 @@ public class Semantico {
                 } else {
                     operador = "";
                 }
-                // Caso seja o primeiro valor da expressão
+                // Caso seja o primeiro valor da expressão]
                 if (temp1 == false) {
-//                    ponto_text_temp += "\nSTO 1000";
+                   ponto_text_temp += "\nSTO 1000";
                     temp1 = true;
                 }
                 // Caso tenha um operador pendente e um valor já armazenado
@@ -846,7 +892,6 @@ public class Semantico {
                     } else {
                         ponto_text_war_err += "Erro semântico: Variável de destino da atribuição não encontrada na lista auxiliar.\n";
                     }
-
                     int tipoDestino = stringParaTipo(varDestinoAtribuicao.tipo); // Converte para o código de tipo
 
                     // Obtém o tipo da expressão (resultado da subexpressão) do topo da pilha de tipos
@@ -926,7 +971,7 @@ public class Semantico {
                 for (Simbolo i : lista_simb_aux) {
                     for (Simbolo s : lista_simbolos) {
                         if (s.nome.equals(i.nome) && s.escopo == i.escopo) {
-//                            ponto_text_temp += "\nLD 1000 ";
+                           ponto_text_temp += "\nLD 1000 ";
                             ponto_text_temp += "\nSTO " + s.nome;
                             temp1 = false;
                             break;
@@ -952,12 +997,11 @@ public class Semantico {
                 break;
 
             case 27:
-                simb_aux = lista_simb_aux.get(0);
+                simb_aux = lista_simb_aux.get(lista_simb_aux.size() - 1);
 
                 if (temp3 == true) {
                     ponto_text_temp += "\nLD 1002";
                     ponto_text_temp += "\nSTO $indr";
-                    System.out.println("temp1 " + temp1);
                     if (temp1 == true) {
                         ponto_text_temp += "\nLD 1000";
                         ponto_text_temp += "\nSTOV " + simb_aux.nome;
@@ -1042,42 +1086,37 @@ public class Semantico {
                 relacional = true;
                 pilha_operador.push("MAIOR");
                 operador_relacional = "MAIOR";
-                pilha_operador.pop();
                 break;
 
             case 35:
                 relacional = true;
                 pilha_operador.push("MENOR");
                 operador_relacional = "MENOR";
-                pilha_operador.pop();
+
                 break;
 
             case 36:
                 relacional = true;
                 pilha_operador.push("MAIOR_IGUAL");
                 operador_relacional = "MAIOR_IGUAL";
-                pilha_operador.pop();
                 break;
 
             case 37:
                 relacional = true;
                 pilha_operador.push("MENOR_IGUAL");
                 operador_relacional = "MENOR_IGUAL";
-                pilha_operador.pop();
                 break;
 
             case 38:
                 relacional = true;
                 pilha_operador.push("IGUAL");
                 operador_relacional = "IGUAL";
-                pilha_operador.pop();
                 break;
 
             case 39:
                 relacional = true;
                 pilha_operador.push("DIFERENTE");
                 operador_relacional = "DIFERENTE";
-                pilha_operador.pop();
                 break;
 
             case 40:
@@ -1116,7 +1155,6 @@ public class Semantico {
                 } else {
                     rotulo_temp = "";
                 }
-                System.out.println("ponto_text_desvio_loop: " + ponto_text_desvio_loop);
                 ponto_text += "\n\n" + rotulo_temp + ":" + ponto_text_desvio_loop;
                 ponto_text_desvio_loop = "";
                 in_relacional_loop = false;
@@ -1164,7 +1202,6 @@ public class Semantico {
 
                 if (temp1) {
                     ponto_text += "\nLD 1000";
-                    ponto_text += "\nSUB 1001";
                 }
 
 
@@ -1260,27 +1297,29 @@ public class Semantico {
                 pilha_rotulo.add(rotulo_temp);
 
                 if (temp1) {
-                    ponto_text_temp += "\nLD 1000";
+                    ponto_text += "\nLD 1000";
                 }
 
                 if (operador_relacional.equals("MAIOR")) {
-                    ponto_text_temp += "\nBLT " + rotulo_temp;
+                    ponto_text += "\nBLT " + rotulo_temp;
                 } else if (operador_relacional.equals("MENOR")) {
-                    ponto_text_temp += "\nBGT " + rotulo_temp;
+                    ponto_text += "\nBGT " + rotulo_temp;
                 } else if (operador_relacional.equals("MAIOR_IGUAL")) {
-                    ponto_text_temp += "\nBLE " + rotulo_temp;
+                    ponto_text += "\nBLE " + rotulo_temp;
                 } else if (operador_relacional.equals("MENOR_IGUAL")) {
-                    ponto_text_temp += "\nBGE " + rotulo_temp;
+                    ponto_text += "\nBGE " + rotulo_temp;
                 } else if (operador_relacional.equals("IGUAL")) {
-                    ponto_text_temp += "\nBNE " + rotulo_temp;
+                    ponto_text += "\nBNE " + rotulo_temp;
                 } else if (operador_relacional.equals("DIFERENTE")) {
-                    ponto_text_temp += "\nBEQ " + rotulo_temp;
+                    ponto_text += "\nBEQ " + rotulo_temp;
                 }
                 operador_relacional = "";
                 if (temp1) {
                     temp1 = false;
                 }
                 rotulo_cont--;
+                in_relacional_loop = true;
+                isEscopo = true;
                 break;
 
             case 51:
@@ -1298,8 +1337,10 @@ public class Semantico {
                 }
                 pilha_rotulo.remove(pilha_rotulo.size() - 1);
 
+                ponto_text_temp += ponto_text_desvio_loop;
                 ponto_text_temp += "\nJMP " + rotulo_temp2;
                 ponto_text_temp += "\n\n" + rotulo_temp + ":";
+                relacional = false;
                 break;
 
             case 52:
@@ -1489,6 +1530,7 @@ public class Semantico {
         rotulo_cont = 0;
         relacional = false;
         in_relacional_loop = false;
+        isEscopo = false;
     }
 
     // Classe de erro semântico
