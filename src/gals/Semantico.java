@@ -106,6 +106,7 @@ public class Semantico {
     // Geração de código
     private static String ponto_data = ".data\n";
     private static String ponto_text = ".text\nJMP _main";
+    private static String ponto_text_desvio_loop = "";
     private static String ponto_text_war_err = "";
 
     public String getPontoText() {
@@ -136,7 +137,16 @@ public class Semantico {
     private static String retorno = "";
     private static int conta_parm = 0;
     private static boolean era_vetor = false;
+    private static boolean relacional = false;
+    private static boolean in_relacional_loop = false;
 
+    private static void escreverTexto(String texto, boolean isDesvioLoop) {
+        if(isDesvioLoop){
+            ponto_text_desvio_loop += texto;
+        } else {
+            ponto_text += texto;
+        }
+    }
 
     private static boolean verifica_escopo(int simb_escopo) {
         // Percorre o vetor procurando pelo valor
@@ -275,6 +285,7 @@ public class Semantico {
         String operador;
         String rotulo_temp;
         String rotulo_temp2;
+        String ponto_text_temp = "";
         boolean flag;
 
         if (pilha_escopo.isEmpty()) {
@@ -339,8 +350,8 @@ public class Semantico {
                     escrever_text = true;
 
                     if (entrada_saida_dado.equals("ENTRADA")) {
-                        ponto_text += "\nLD $in_port";
-                        ponto_text += "\nSTO " + str;
+                        ponto_text_temp += "\nLD $in_port";
+                        ponto_text_temp += "\nSTO " + str;
                         entrada_saida_dado = "";
                     }
 
@@ -372,7 +383,7 @@ public class Semantico {
                 }
 
                 parametro_aux = str;
-                ponto_text += "\n\n_" + parametro_aux;
+                ponto_text_temp += "\n\n_" + parametro_aux;
                 break;
 
             case 7:
@@ -398,7 +409,7 @@ public class Semantico {
                             s.iniciado = true;
 
                             if (s.vetor == true) {
-                                ponto_text += "\nSTO 1002";
+                                ponto_text_temp += "\nSTO 1002";
                                 temp3 = true;
                             }
                         }
@@ -476,24 +487,30 @@ public class Semantico {
 
                 if (operador.equals("")) {
                     if (parametro_aux.equals("") || parametro_aux.equals("main")) {
-                        ponto_text += "\nLD " + str;
+                        ponto_text_temp += "\nLD " + str;
                     } else {
-                        ponto_text += "\nLD " + parametro_aux + "_" + str;
+                        ponto_text_temp += "\nLD " + parametro_aux + "_" + str;
                     }
 
+                    if(relacional) temp1 = false;
+
                     if (temp1 == false && calculando_indice == false) {
-                        ponto_text += "\nSTO 1000";
+                        if(relacional){
+                            ponto_text_temp += "\nSTO 1001";
+                        } else {
+                            ponto_text_temp += "\nSTO 1000";
+                        }
                         temp1 = true;
                     }
 
                     if (!chamada_nome.equals("")) {
-                        ponto_text += "\nLD 1000";
+                        ponto_text_temp += "\nLD 1000";
 
                         flag = false;
 
                         for (Simbolo s : lista_simbolos) {
                             if (flag == true && s.parametro_lido == false) {
-                                ponto_text += "\nSTO " + chamada_nome + "_" + s.nome;
+                                ponto_text_temp += "\nSTO " + chamada_nome + "_" + s.nome;
                                 s.parametro_lido = true;
                                 temp1 = false;
                                 break;
@@ -533,14 +550,12 @@ public class Semantico {
                 }
                 break;
 
-            case 20: // Token: LITERAL (Constante numérica, string, char, boolean)
-                // Pega o operador no topo da pilha, se houver.
+            case 20:
                 if (!pilha_operador.isEmpty()) {
                     operador = pilha_operador.peek();
                 } else {
                     operador = "";
                 }
-                System.out.println("temp1 antes: " + temp1);
 
                 if (Objects.equals(str, ")")) {
                     break;
@@ -569,25 +584,25 @@ public class Semantico {
                             ponto_text_war_err += "Identificador '" + str + "' não declarado ou reconhecido. \n";
                         }
                     } else {
-                        tipoAtual = stringParaTipo(tipoNome); // É um literal válido.
+                        tipoAtual = stringParaTipo(tipoNome);
                     }
 
-                    tipoExpressao = tipoAtual; // Empilha o tipo semântico.
+                    tipoExpressao = tipoAtual;
 
-                    // Geração de Código para carregar o literal/identificador.
+                    
                     if (escrever_text) {
-                        ponto_text += "\nLDI " + str; // Carrega o valor imediato (literal).
-                        System.out.println("calculando_indice: " + calculando_indice + " case: " + action);
+                        ponto_text_temp += "\nLDI " + str; // Carrega o valor imediato (literal).
                         // Se for o primeiro valor numa expressão, armazena em registrador temporário.
-                        // if (temp1 == false && calculando_indice == false) {
-                        //     ponto_text += "\nSTO 1000"; // Armazena em R1000 (registrador temporário).
-                        //     if(entrando_no_indice) {
-                        //         temp1 = true; // Marca R1000 como ocupado.
-                        //     }
-                        // }
+                        
+                        if (temp1 == false && calculando_indice == false) {
+                            ponto_text_temp += "\nSTO 1000"; // Armazena em R1000 (registrador temporário).
+                            if(entrando_no_indice) {
+                                temp1 = true; // Marca R1000 como ocupado.
+                            }
+                        }
                     }
 
-                    entrando_no_indice = false; // Garante que a flag de índice é resetada.
+                    entrando_no_indice = false; 
 
                 }
                 else if (operador.equals("SOMA")) {
@@ -628,20 +643,20 @@ public class Semantico {
                     // Geração de Código para a SOMA.
                     if (escrever_text) {
                         if (entrando_no_indice) {
-                            if(era_vetor == false) ponto_text += "\nSTO 1000";
-                            ponto_text += "\nLDI " + operando2Str; // Carrega o primeiro operando (literal)
+                            if(era_vetor == false) ponto_text_temp += "\nSTO 1000";
+                            ponto_text_temp += "\nLDI " + operando2Str; // Carrega o primeiro operando (literal)
                             temp1 = true;
                             inicio_atribuicao = false;
                         } else if (calculando_indice == true && entrando_no_indice == false) {
-                            ponto_text += "\nADDI " + operando2Str;
+                            ponto_text_temp += "\nADDI " + operando2Str;
                             pilha_operador.pop();
                         }
                         else {
-                            ponto_text += "\nLD 1000"; // Carrega o valor do primeiro operando.
-                            ponto_text += "\nADDI " + operando2Str; // Adiciona o segundo operando (literal).
+                            ponto_text_temp += "\nLD 1000"; // Carrega o valor do primeiro operando.
+                            ponto_text_temp += "\nADDI " + operando2Str; // Adiciona o segundo operando (literal).
                             System.out.println("calculando_indice : " + calculando_indice);
                             if(!calculando_indice) {
-                                ponto_text += "\nSTO 1000"; // Armazena o resultado da soma de volta em R1000.
+                                ponto_text_temp += "\nSTO 1000"; // Armazena o resultado da soma de volta em R1000.
                             }
                             pilha_operador.pop();
                         }
@@ -682,134 +697,33 @@ public class Semantico {
                     // Geração de Código para a SUBTRACAO.
                     if (escrever_text) {
                         if (entrando_no_indice) {
-                            ponto_text += "\nSTO 1000";
-                            ponto_text += "\nLDI " + operando2Str; // Carrega o primeiro operando (literal)
+                            ponto_text_temp += "\nSTO 1000";
+                            ponto_text_temp += "\nLDI " + operando2Str; // Carrega o primeiro operando (literal)
                             temp1 = true;
                             inicio_atribuicao = false;
                         } else if (calculando_indice == true && entrando_no_indice == false) {
-                            ponto_text += "\nSUBI " + operando2Str;
+                            ponto_text_temp += "\nSUBI " + operando2Str;
                             pilha_operador.pop();
                         }
                         else {
-                            ponto_text += "\nLD 1000"; // Carrega o valor do primeiro operando.
-                            ponto_text += "\nSUBI " + operando2Str; // Adiciona o segundo operando (literal).
+                            ponto_text_temp += "\nLD 1000"; // Carrega o valor do primeiro operando.
+                            ponto_text_temp += "\nSUBI " + operando2Str; // Adiciona o segundo operando (literal).
                             System.out.println("calculando_indice : " + calculando_indice);
                             if(!calculando_indice) {
-                                ponto_text += "\nSTO 1000"; // Armazena o resultado da soma de volta em R1000.
+                                ponto_text_temp += "\nSTO 1000"; // Armazena o resultado da soma de volta em R1000.
                             }
                             pilha_operador.pop();
                         }
                     }
                     entrando_no_indice = false;
 
-                } else if (operador.equals("MULTIPLICACAO")) {
-                    pilha_constantes.push(str); // Empilha o segundo operando.
-
-                    if (pilha_constantes.size() < 2) {
-                        ponto_text_war_err += "Erro semântico: Operandos insuficientes para a operação MULTIPLICACAO.\n";
-                    }
-                    String operando2Str = pilha_constantes.pop();
-                    String operando1Str = pilha_constantes.pop();
-
-                    int tipoOperando2 = stringParaTipo(verificaTipo(operando2Str));
-                    int tipoOperando1 = stringParaTipo(verificaTipo(operando1Str));
-
-                    pilha_operador.pop(); // Remove "MULTIPLICACAO".
-
-                    int tipoResultanteDaOperacao = resultType(tipoOperando1, tipoOperando2, MUL); // Assume MUL.
-
-                    if (tipoResultanteDaOperacao == ERR) {
-                        ponto_text_war_err +="Erro de tipo: Operação 'MULTIPLICACAO' inválida entre " +
-                                nomeTipo(tipoOperando1) + " e " + nomeTipo(tipoOperando2) + ".\n";
-                    }
-                    tipoExpressao = tipoResultanteDaOperacao;
-
-                    // Geração de Código para a MULTIPLICACAO.
-//                    if (escrever_text) {
-//                        ponto_text += "\nLD 1000";
-//                        ponto_text += "\nMULI " + operando2Str;
-//                        ponto_text += "\nSTO 1000";
-//                    }
-                    entrando_no_indice = false;
-
-                } else if (operador.equals("DIVISAO")) {
-                    pilha_constantes.push(str); // Empilha o segundo operando.
-
-                    if (pilha_constantes.size() < 2) {
-                        ponto_text_war_err += "Erro semântico: Operandos insuficientes para a operação DIVISAO. \n";
-                    }
-                    String operando2Str = pilha_constantes.pop();
-                    String operando1Str = pilha_constantes.pop();
-
-                    int tipoOperando2 = stringParaTipo(verificaTipo(operando2Str));
-                    int tipoOperando1 = stringParaTipo(verificaTipo(operando1Str));
-
-                    // **Verificação de Divisão por Zero:**
-                    // Se o segundo operando (divisor) é um literal numérico e é zero.
-//                    if (isNumeric(operando2Str) && Double.parseDouble(operando2Str) == 0) {
-//                        throw new SemanticError("Erro semântico: Divisão por zero.");
-//                    }
-
-                    pilha_operador.pop(); // Remove "DIVISAO".
-
-                    int tipoResultanteDaOperacao = resultType(tipoOperando1, tipoOperando2, DIV); // Assume DIV.
-
-                    if (tipoResultanteDaOperacao == ERR) {
-                        ponto_text_war_err += "Erro de tipo: Operação 'DIVISAO' inválida entre " +
-                                nomeTipo(tipoOperando1) + " e " + nomeTipo(tipoOperando2) + ".\n";
-                    }
-                    tipoExpressao = tipoResultanteDaOperacao;
-
-                    // Geração de Código para a DIVISAO.
-//                    if (escrever_text) {
-//                        ponto_text += "\nLD 1000";
-//                        ponto_text += "\nDIVI " + operando2Str;
-//                        ponto_text += "\nSTO 1000";
-//                    }
-                    entrando_no_indice = false;
-
-                } else if (operador.equals("RESTO")) {
-                    pilha_constantes.push(str); // Empilha o segundo operando.
-
-                    if (pilha_constantes.size() < 2) {
-                        ponto_text_war_err += "Erro semântico: Operandos insuficientes para a operação RESTO.\n";
-                    }
-                    String operando2Str = pilha_constantes.pop();
-                    String operando1Str = pilha_constantes.pop();
-
-                    int tipoOperando2 = stringParaTipo(verificaTipo(operando2Str));
-                    int tipoOperando1 = stringParaTipo(verificaTipo(operando1Str));
-
-                    // **Verificação de Resto por Zero:**
-//                    if (isNumeric(operando2Str) && Double.parseDouble(operando2Str) == 0) {
-//                        throw new SemanticError("Erro semântico: Operação de resto com divisor zero.");
-//                    }
-
-                    pilha_operador.pop(); // Remove "RESTO".
-
-                    int tipoResultanteDaOperacao = resultType(tipoOperando1, tipoOperando2, DIV); // Assume REM.
-
-                    if (tipoResultanteDaOperacao == ERR) {
-                        ponto_text_war_err += "Erro de tipo: Operação 'RESTO' inválida entre " +
-                                nomeTipo(tipoOperando1) + " e " + nomeTipo(tipoOperando2) + ".\n";
-                    }
-                    tipoExpressao = tipoResultanteDaOperacao;
-
-                    // Geração de Código para o RESTO.
-//                    if (escrever_text) {
-//                        ponto_text += "\nLD 1000";
-//                        ponto_text += "\nREMI " + operando2Str; // Assumindo instrução REMI.
-//                        ponto_text += "\nSTO 1000";
-//                    }
-                    entrando_no_indice = false;
-
                 }
                 else if (operador == "AND") {
                     if (escrever_text) {
                         if (temp1 == true) {
-                            ponto_text += "\nLD 1000";
-                            ponto_text += "\nANDI " + str;
-                            ponto_text += "\nSTO 1000";
+                            ponto_text_temp += "\nLD 1000";
+                            ponto_text_temp += "\nANDI " + str;
+                            ponto_text_temp += "\nSTO 1000";
 
                             pilha_operador.pop();
                         }
@@ -818,9 +732,9 @@ public class Semantico {
                 else if (operador == "OR_BIT") {
                     if (escrever_text) {
                         if (temp1 == true) {
-                            ponto_text += "\nLD 1000";
-                            ponto_text += "\nORI " + str;
-                            ponto_text += "\nSTO 1000";
+                            ponto_text_temp += "\nLD 1000";
+                            ponto_text_temp += "\nORI " + str;
+                            ponto_text_temp += "\nSTO 1000";
 
                             pilha_operador.pop();
                         }
@@ -829,9 +743,9 @@ public class Semantico {
                 else if (operador == "XOR_BIT") {
                     if (escrever_text) {
                         if (temp1 == true) {
-                            ponto_text += "\nLD 1000";
-                            ponto_text += "\nXORI " + str;
-                            ponto_text += "\nSTO 1000";
+                            ponto_text_temp += "\nLD 1000";
+                            ponto_text_temp += "\nXORI " + str;
+                            ponto_text_temp += "\nSTO 1000";
 
                             pilha_operador.pop();
                         }
@@ -839,18 +753,15 @@ public class Semantico {
                 }
                 else if (operador == "NOT") {
                     if (escrever_text) {
-                        ponto_text += "\nNOT " + str;
+                        ponto_text_temp += "\nNOT " + str;
 
                         pilha_operador.pop();
                     }
                 }
                 else if (operador.equals("MAIOR") || operador.equals("MENOR") || operador.equals("MAIOR_IGUAL") ||
                         operador.equals("MENOR_IGUAL") || operador.equals("IGUAL") || operador.equals("DIFERENTE")) {
-                    pilha_constantes.push(str); // Empilha o segundo operando.
-
-//                    if (pilha_constantes.size() < 2) {
-//                        throw new SemanticError("Erro semântico: Operandos insuficientes para a operação relacional.");
-//                    }
+                    pilha_constantes.push(str);
+                    
                     String operando2Str = pilha_constantes.pop();
                     String operando1Str = pilha_constantes.pop();
 
@@ -872,9 +783,9 @@ public class Semantico {
 
                     // Geração de Código para Operadores Relacionais.
 //                    if (escrever_text) {
-//                        ponto_text += "\nLD 1000"; // Carrega o primeiro operando.
-//                        ponto_text += "\nSUBI " + operando2Str; // Subtrai o segundo para comparação.
-//                        ponto_text += "\nSTO 1000"; // Armazena a diferença.
+//                        ponto_text_temp += "\nLD 1000"; // Carrega o primeiro operando.
+//                        ponto_text_temp += "\nSUBI " + operando2Str; // Subtrai o segundo para comparação.
+//                        ponto_text_temp += "\nSTO 1000"; // Armazena a diferença.
 //                        // Em seguida, você precisaria de instruções de salto condicional baseadas no resultado de 1000.
 //                        // Ex: BREQ (Branch if Equal), BRLT (Branch if Less Than), etc.
 //                        // Esta parte da geração de código é complexa e depende da sua VM.
@@ -903,28 +814,26 @@ public class Semantico {
                 // Obtém o operador atual (se houver)
                 if (!pilha_operador.isEmpty()) {
                     operador = pilha_operador.peek();
-                    System.out.println("operador: " + operador);
                 } else {
                     operador = "";
                 }
-                System.out.println("temp1 antes: " + temp1);
                 // Caso seja o primeiro valor da expressão
                 if (temp1 == false) {
-//                    ponto_text += "\nSTO 1000";
+//                    ponto_text_temp += "\nSTO 1000";
                     temp1 = true;
                 }
                 // Caso tenha um operador pendente e um valor já armazenado
                 else if (temp1 == true && !operador.equals("")) {
-                    ponto_text += "\nLD " + str;
-                    ponto_text += "\nSTO 1001";
-                    ponto_text += "\nLD 1000";
+                    ponto_text_temp += "\nLD " + str;
+                    ponto_text_temp += "\nSTO 1001";
+                    ponto_text_temp += "\nLD 1000";
 
                     if (operador.equals("SOMA")) {
-                        ponto_text += "\nADD 1001";
+                        ponto_text_temp += "\nADD 1001";
                     } else if (operador.equals("SUBTRACAO")) {
-                        ponto_text += "\nSUB 1001";
+                        ponto_text_temp += "\nSUB 1001";
                     }
-                    ponto_text += "\nSTO 1000";
+                    ponto_text_temp += "\nSTO 1000";
                     if (!pilha_operador.isEmpty()) {
                         pilha_operador.pop();
                     }
@@ -966,15 +875,14 @@ public class Semantico {
 
                     // Geração de código da atribuição usando o último símbolo como destino
                     if (entrando_no_indice) {
-                        ponto_text += "\nLD 1000";
+                        ponto_text_temp += "\nLD 1000";
 
                         if (parametro_aux.equals("") || parametro_aux.equals("main")) {
-                            ponto_text += "\nSTO " + varDestinoAtribuicao.nome;
+                            ponto_text_temp += "\nSTO " + varDestinoAtribuicao.nome;
                         } else {
-                            ponto_text += "\nSTO " + parametro_aux + "_" + varDestinoAtribuicao.nome;
+                            ponto_text_temp += "\nSTO " + parametro_aux + "_" + varDestinoAtribuicao.nome;
 
                         }
-                        System.out.println("temp1 antes: " + temp1);
                         temp1 = false; // Libera o registrador temporário R1000
                     }
                     // Limpa as pilhas após a atribuição completa
@@ -1018,8 +926,8 @@ public class Semantico {
                 for (Simbolo i : lista_simb_aux) {
                     for (Simbolo s : lista_simbolos) {
                         if (s.nome.equals(i.nome) && s.escopo == i.escopo) {
-//                            ponto_text += "\nLD 1000 ";
-                            ponto_text += "\nSTO " + s.nome;
+//                            ponto_text_temp += "\nLD 1000 ";
+                            ponto_text_temp += "\nSTO " + s.nome;
                             temp1 = false;
                             break;
                         }
@@ -1044,21 +952,21 @@ public class Semantico {
                 break;
 
             case 27:
-                simb_aux = lista_simb_aux.get(0);
+                simb_aux = lista_simb_aux.get(lista_simb_aux.size() - 1);
 
                 if (temp3 == true) {
-                    ponto_text += "\nLD 1002";
-                    ponto_text += "\nSTO $indr";
+                    ponto_text_temp += "\nLD 1002";
+                    ponto_text_temp += "\nSTO $indr";
                     System.out.println("temp1 " + temp1);
                     if (temp1 == true) {
-                        ponto_text += "\nLD 1000";
-                        ponto_text += "\nSTOV " + simb_aux.nome;
+                        ponto_text_temp += "\nLD 1000";
+                        ponto_text_temp += "\nSTOV " + simb_aux.nome;
                         temp1 = false;
                     }
                 } else {
                     if (temp1 == true) {
-                        ponto_text += "\nLD 1000";
-                        ponto_text += "\nSTO " + simb_aux.nome;
+                        ponto_text_temp += "\nLD 1000";
+                        ponto_text_temp += "\nSTO " + simb_aux.nome;
                         temp1 = false;
                     }
                 }
@@ -1083,27 +991,27 @@ public class Semantico {
 
                 simb_aux = lista_simb_aux.get(lista_simb_aux.size() - 1);
                 if (inicio_atribuicao == false) {
-                    ponto_text += "\nSTO $indr";
-                    ponto_text += "\nLDV " + simb_aux.nome;
+                    ponto_text_temp += "\nSTO $indr";
+                    ponto_text_temp += "\nLDV " + simb_aux.nome;
                 }
                 if (inicio_atribuicao == false) {
                     if (temp1 == false) {
-                        ponto_text += "\nSTO 1000";
+                        ponto_text_temp += "\nSTO 1000";
                         temp1 = true;
                     } else {
-                        ponto_text += "\nSTO 1001";
+                        ponto_text_temp += "\nSTO 1001";
                         temp2 = true;
 
-                        ponto_text += "\nLD 1000";
+                        ponto_text_temp += "\nLD 1000";
                         System.out.println("operador " + operador);
                         if (operador.equals("SOMA")) {
-                            ponto_text += "\nADD 1001";
-                            ponto_text += "\nSTO 1000";
+                            ponto_text_temp += "\nADD 1001";
+                            ponto_text_temp += "\nSTO 1000";
                             temp2 = false;
                             pilha_operador.pop();
                         } else if (operador.equals("SUBTRACAO")) {
-                            ponto_text += "\nSUB 1001";
-                            ponto_text += "\nSTO 1000";
+                            ponto_text_temp += "\nSUB 1001";
+                            ponto_text_temp += "\nSTO 1000";
                             temp2 = false;
                             pilha_operador.pop();
                         }
@@ -1125,49 +1033,62 @@ public class Semantico {
                 break;
 
             case 33:
-                ponto_text += "\nLD 1000";
-                ponto_text += "\nSTO $out_port";
+                ponto_text_temp += "\nLD 1000";
+                ponto_text_temp += "\nSTO $out_port";
                 entrada_saida_dado = "";
                 break;
 
             case 34:
+                relacional = true;
                 pilha_operador.push("MAIOR");
                 operador_relacional = "MAIOR";
+                pilha_operador.pop();
                 break;
 
             case 35:
+                relacional = true;
                 pilha_operador.push("MENOR");
                 operador_relacional = "MENOR";
+                pilha_operador.pop();
                 break;
 
             case 36:
-
+                relacional = true;
                 pilha_operador.push("MAIOR_IGUAL");
                 operador_relacional = "MAIOR_IGUAL";
+                pilha_operador.pop();
                 break;
 
             case 37:
+                relacional = true;
                 pilha_operador.push("MENOR_IGUAL");
                 operador_relacional = "MENOR_IGUAL";
+                pilha_operador.pop();
                 break;
 
             case 38:
+                relacional = true;
                 pilha_operador.push("IGUAL");
                 operador_relacional = "IGUAL";
+                pilha_operador.pop();
                 break;
 
             case 39:
+                relacional = true;
                 pilha_operador.push("DIFERENTE");
                 operador_relacional = "DIFERENTE";
+                pilha_operador.pop();
                 break;
 
             case 40:
                 rotulo_cont++;
+                in_relacional_loop = true;
                 rotulo_temp = "R" + rotulo_cont;
                 pilha_rotulo.push(rotulo_temp);
 
                 if (temp1 == true) {
                     ponto_text += "\nLD 1000";
+                    ponto_text += "\nSUB 1001";
                 }
 
                 if (operador_relacional.equals("MAIOR")) {
@@ -1195,8 +1116,10 @@ public class Semantico {
                 } else {
                     rotulo_temp = "";
                 }
-                ponto_text += "\n\n" + rotulo_temp + ":";
-                rotulo_cont--;
+                System.out.println("ponto_text_desvio_loop: " + ponto_text_desvio_loop);
+                ponto_text += "\n\n" + rotulo_temp + ":" + ponto_text_desvio_loop;
+                ponto_text_desvio_loop = "";
+                in_relacional_loop = false;
                 break;
 
             case 42:
@@ -1210,8 +1133,9 @@ public class Semantico {
                 rotulo_temp2 = "R" + rotulo_cont;
                 pilha_rotulo.push(rotulo_temp2);
                 ponto_text += "\nJMP " + rotulo_temp2;
-                ponto_text += "\n\n" + rotulo_temp + ":";
-                rotulo_cont--;
+                System.out.println("ponto_text_desvio_loop: " + ponto_text_desvio_loop);
+                ponto_text += "\n\n" + rotulo_temp + ":" + ponto_text_desvio_loop;
+                ponto_text_desvio_loop = "";
                 break;
 
             case 43:
@@ -1220,25 +1144,29 @@ public class Semantico {
                 } else {
                     rotulo_temp = "";
                 }
-                ponto_text += "\n\n" + rotulo_temp + ":";
-                rotulo_cont--;
+                ponto_text += "\n\n" + rotulo_temp + ":" + ponto_text_desvio_loop;
+                ponto_text_desvio_loop = "";
+                in_relacional_loop = false;
                 break;
 
             case 44:
                 rotulo_cont++;
                 rotulo_temp = "R" + rotulo_cont;
                 pilha_rotulo.push(rotulo_temp);
-                ponto_text += "\n\n" + rotulo_temp + ":";
+                ponto_text_temp += "\n\n" + rotulo_temp + ":";
                 break;
 
             case 45:
                 rotulo_cont++;
+                in_relacional_loop = true;
                 rotulo_temp = "R" + Integer.toString(rotulo_cont);
                 pilha_rotulo.add(rotulo_temp);
 
                 if (temp1) {
                     ponto_text += "\nLD 1000";
+                    ponto_text += "\nSUB 1001";
                 }
+
 
                 if (operador_relacional.equals("MAIOR")) {
                     ponto_text += "\nBLT " + rotulo_temp;
@@ -1275,14 +1203,16 @@ public class Semantico {
                 pilha_rotulo.remove(pilha_rotulo.size() - 1);
 
                 ponto_text += "\nJMP " + rotulo_temp2;
-                ponto_text += "\n\n" + rotulo_temp + ":";
+                ponto_text += "\n\n" + rotulo_temp + ":" + ponto_text_desvio_loop + "\n";
+                ponto_text_desvio_loop = "";
+                in_relacional_loop = false;
                 break;
 
             case 47:
                 rotulo_cont++;
                 rotulo_temp = "R" + Integer.toString(rotulo_cont);
                 pilha_rotulo.add(rotulo_temp);
-                ponto_text += "\n\n" + rotulo_temp + ":";
+                ponto_text_temp += "\n\n" + rotulo_temp + ":";
                 break;
 
             case 48:
@@ -1294,21 +1224,21 @@ public class Semantico {
                 pilha_rotulo.remove(pilha_rotulo.size() - 1);
 
                 if (temp1) {
-                    ponto_text += "\nLD 1000";
+                    ponto_text_temp += "\nLD 1000";
                 }
 
                 if (operador_relacional.equals("MAIOR")) {
-                    ponto_text += "\nBGT " + rotulo_temp;
+                    ponto_text_temp += "\nBGT " + rotulo_temp;
                 } else if (operador_relacional.equals("MENOR")) {
-                    ponto_text += "\nBLT " + rotulo_temp;
+                    ponto_text_temp += "\nBLT " + rotulo_temp;
                 } else if (operador_relacional.equals("MAIOR_IGUAL")) {
-                    ponto_text += "\nBGE " + rotulo_temp;
+                    ponto_text_temp += "\nBGE " + rotulo_temp;
                 } else if (operador_relacional.equals("MENOR_IGUAL")) {
-                    ponto_text += "\nBLE " + rotulo_temp;
+                    ponto_text_temp += "\nBLE " + rotulo_temp;
                 } else if (operador_relacional.equals("IGUAL")) {
-                    ponto_text += "\nBEQ " + rotulo_temp;
+                    ponto_text_temp += "\nBEQ " + rotulo_temp;
                 } else if (operador_relacional.equals("DIFERENTE")) {
-                    ponto_text += "\nBNE " + rotulo_temp;
+                    ponto_text_temp += "\nBNE " + rotulo_temp;
                 }
                 operador_relacional = "";
                 if (temp1) {
@@ -1321,7 +1251,7 @@ public class Semantico {
                 rotulo_cont++;
                 rotulo_temp = "R" + Integer.toString(rotulo_cont);
                 pilha_rotulo.add(rotulo_temp);
-                ponto_text += "\n\n" + rotulo_temp + ":";
+                ponto_text_temp += "\n\n" + rotulo_temp + ":";
                 break;
 
             case 50:
@@ -1330,21 +1260,21 @@ public class Semantico {
                 pilha_rotulo.add(rotulo_temp);
 
                 if (temp1) {
-                    ponto_text += "\nLD 1000";
+                    ponto_text_temp += "\nLD 1000";
                 }
 
                 if (operador_relacional.equals("MAIOR")) {
-                    ponto_text += "\nBLT " + rotulo_temp;
+                    ponto_text_temp += "\nBLT " + rotulo_temp;
                 } else if (operador_relacional.equals("MENOR")) {
-                    ponto_text += "\nBGT " + rotulo_temp;
+                    ponto_text_temp += "\nBGT " + rotulo_temp;
                 } else if (operador_relacional.equals("MAIOR_IGUAL")) {
-                    ponto_text += "\nBLE " + rotulo_temp;
+                    ponto_text_temp += "\nBLE " + rotulo_temp;
                 } else if (operador_relacional.equals("MENOR_IGUAL")) {
-                    ponto_text += "\nBGE " + rotulo_temp;
+                    ponto_text_temp += "\nBGE " + rotulo_temp;
                 } else if (operador_relacional.equals("IGUAL")) {
-                    ponto_text += "\nBNE " + rotulo_temp;
+                    ponto_text_temp += "\nBNE " + rotulo_temp;
                 } else if (operador_relacional.equals("DIFERENTE")) {
-                    ponto_text += "\nBEQ " + rotulo_temp;
+                    ponto_text_temp += "\nBEQ " + rotulo_temp;
                 }
                 operador_relacional = "";
                 if (temp1) {
@@ -1368,12 +1298,12 @@ public class Semantico {
                 }
                 pilha_rotulo.remove(pilha_rotulo.size() - 1);
 
-                ponto_text += "\nJMP " + rotulo_temp2;
-                ponto_text += "\n\n" + rotulo_temp + ":";
+                ponto_text_temp += "\nJMP " + rotulo_temp2;
+                ponto_text_temp += "\n\n" + rotulo_temp + ":";
                 break;
 
             case 52:
-                ponto_text += "\n\n_" + str + ":";
+                ponto_text_temp += "\n\n_" + str + ":";
 
                 simb = iniciliaza_simbolo();
                 simb.nome = str;
@@ -1384,7 +1314,7 @@ public class Semantico {
 
             case 53:
                 if (!parametro_aux.equals("main")) {
-                    ponto_text += "\nRETURN 0 ";
+                    ponto_text_temp += "\nRETURN 0 ";
                 }
 
                 parametro_aux = "";
@@ -1392,9 +1322,9 @@ public class Semantico {
 
             case 54:
                 if (parametro_aux.equals("") || parametro_aux.equals("main")) {
-                    ponto_text += "\nLD " + retorno;
+                    ponto_text_temp += "\nLD " + retorno;
                 } else {
-                    ponto_text += "\nLD " + parametro_aux + "_" + retorno;
+                    ponto_text_temp += "\nLD " + parametro_aux + "_" + retorno;
                 }
                 break;
 
@@ -1422,7 +1352,7 @@ public class Semantico {
                 boolean funcao_existe = false;
                 int parametros_totais = 0;
 
-                ponto_text += "\nCALL _" + chamada_nome;
+                ponto_text_temp += "\nCALL _" + chamada_nome;
                 for (Simbolo s : lista_simbolos) {
                     s.parametro_lido = false;
                 }
@@ -1455,6 +1385,7 @@ public class Semantico {
 
                 conta_parm = 0;
                 chamada_nome = "";
+                escreverTexto(ponto_text_temp, in_relacional_loop);
                 break;
             }
 
@@ -1463,6 +1394,7 @@ public class Semantico {
                 break;
             }
         }
+        escreverTexto(ponto_text_temp, in_relacional_loop);
 
         System.out.println("\n------------- lista de simbolos ------------");
         for (Simbolo s : lista_simbolos) {
@@ -1478,7 +1410,7 @@ public class Semantico {
         }
         System.out.println("------------- Fim ------------\n");
         System.out.println("------------ codigo ------------\n");
-        System.out.println(ponto_data + "\n" + ponto_text + "\n" + "HLT 0");
+        System.out.println(ponto_data + "\n" + ponto_text_temp + "\n" + "HLT 0");
 
         // Criando o JSON com a lista de símbolos
         JSONArray jsonSimbolos = new JSONArray();
@@ -1554,6 +1486,9 @@ public class Semantico {
         chamada_nome = "";
         retorno = "";
         conta_parm = 0;
+        rotulo_cont = 0;
+        relacional = false;
+        in_relacional_loop = false;
     }
 
     // Classe de erro semântico
