@@ -952,7 +952,7 @@ public class Semantico {
                 break;
 
             case 27:
-                simb_aux = lista_simb_aux.get(lista_simb_aux.size() - 1);
+                simb_aux = lista_simb_aux.get(0);
 
                 if (temp3 == true) {
                     ponto_text_temp += "\nLD 1002";
