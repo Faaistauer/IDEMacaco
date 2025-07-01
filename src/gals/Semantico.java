@@ -502,11 +502,7 @@ public class Semantico {
                     if(relacional) temp1 = false;
 
                     if (temp1 == false && calculando_indice == false) {
-                        if(relacional){
-                            ponto_text_temp += "\nSTO 1001";
-                        } else {
-                            ponto_text_temp += "\nSTO 1000";
-                        }
+                        ponto_text_temp += "\nSTO 1000";
                         temp1 = true;
                     }
 
@@ -1127,21 +1123,21 @@ public class Semantico {
 
                 if (temp1 == true) {
                     ponto_text += "\nLD 1000";
-                    ponto_text += "\nSUB 1001";
+//                    ponto_text += "\nSUB 1001";
                 }
 
                 if (operador_relacional.equals("MAIOR")) {
-                    ponto_text += "\nBLT " + rotulo_temp;
-                } else if (operador_relacional.equals("MENOR")) {
                     ponto_text += "\nBGT " + rotulo_temp;
+                } else if (operador_relacional.equals("MENOR")) {
+                    ponto_text += "\nBLT " + rotulo_temp;
                 } else if (operador_relacional.equals("MAIOR_IGUAL")) {
-                    ponto_text += "\nBLE " + rotulo_temp;
-                } else if (operador_relacional.equals("MENOR_IGUAL")) {
                     ponto_text += "\nBGE " + rotulo_temp;
+                } else if (operador_relacional.equals("MENOR_IGUAL")) {
+                    ponto_text += "\nBLE " + rotulo_temp;
                 } else if (operador_relacional.equals("IGUAL")) {
-                    ponto_text += "\nBNE " + rotulo_temp;
-                } else if (operador_relacional.equals("DIFERENTE")) {
                     ponto_text += "\nBEQ " + rotulo_temp;
+                } else if (operador_relacional.equals("DIFERENTE")) {
+                    ponto_text += "\nBNE " + rotulo_temp;
                 }
                 operador_relacional = "";
                 if (temp1 == true) {
@@ -1206,17 +1202,17 @@ public class Semantico {
 
 
                 if (operador_relacional.equals("MAIOR")) {
-                    ponto_text += "\nBLT " + rotulo_temp;
-                } else if (operador_relacional.equals("MENOR")) {
                     ponto_text += "\nBGT " + rotulo_temp;
+                } else if (operador_relacional.equals("MENOR")) {
+                    ponto_text += "\nBLT " + rotulo_temp;
                 } else if (operador_relacional.equals("MAIOR_IGUAL")) {
-                    ponto_text += "\nBLE " + rotulo_temp;
-                } else if (operador_relacional.equals("MENOR_IGUAL")) {
                     ponto_text += "\nBGE " + rotulo_temp;
+                } else if (operador_relacional.equals("MENOR_IGUAL")) {
+                    ponto_text += "\nBLE " + rotulo_temp;
                 } else if (operador_relacional.equals("IGUAL")) {
-                    ponto_text += "\nBNE " + rotulo_temp;
-                } else if (operador_relacional.equals("DIFERENTE")) {
                     ponto_text += "\nBEQ " + rotulo_temp;
+                } else if (operador_relacional.equals("DIFERENTE")) {
+                    ponto_text += "\nBNE " + rotulo_temp;
                 }
                 operador_relacional = "";
                 if (temp1) {
@@ -1301,23 +1297,23 @@ public class Semantico {
                 }
 
                 if (operador_relacional.equals("MAIOR")) {
-                    ponto_text += "\nBLT " + rotulo_temp;
-                } else if (operador_relacional.equals("MENOR")) {
                     ponto_text += "\nBGT " + rotulo_temp;
+                } else if (operador_relacional.equals("MENOR")) {
+                    ponto_text += "\nBLT " + rotulo_temp;
                 } else if (operador_relacional.equals("MAIOR_IGUAL")) {
-                    ponto_text += "\nBLE " + rotulo_temp;
-                } else if (operador_relacional.equals("MENOR_IGUAL")) {
                     ponto_text += "\nBGE " + rotulo_temp;
+                } else if (operador_relacional.equals("MENOR_IGUAL")) {
+                    ponto_text += "\nBLE " + rotulo_temp;
                 } else if (operador_relacional.equals("IGUAL")) {
-                    ponto_text += "\nBNE " + rotulo_temp;
-                } else if (operador_relacional.equals("DIFERENTE")) {
                     ponto_text += "\nBEQ " + rotulo_temp;
+                } else if (operador_relacional.equals("DIFERENTE")) {
+                    ponto_text += "\nBNE " + rotulo_temp;
                 }
                 operador_relacional = "";
                 if (temp1) {
                     temp1 = false;
                 }
-                rotulo_cont--;
+                // rotulo_cont--;
                 in_relacional_loop = true;
                 isEscopo = true;
                 break;
