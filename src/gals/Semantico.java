@@ -1151,7 +1151,8 @@ public class Semantico {
                 } else {
                     rotulo_temp = "";
                 }
-                ponto_text += "\n\n" + rotulo_temp + ":" + ponto_text_desvio_loop;
+                rotulo_cont++;
+                ponto_text += ponto_text_desvio_loop;
                 ponto_text_desvio_loop = "";
                 in_relacional_loop = false;
                 break;
@@ -1167,7 +1168,6 @@ public class Semantico {
                 rotulo_temp2 = "R" + rotulo_cont;
                 pilha_rotulo.push(rotulo_temp2);
                 ponto_text += "\nJMP " + rotulo_temp2;
-                System.out.println("ponto_text_desvio_loop: " + ponto_text_desvio_loop);
                 ponto_text += "\n\n" + rotulo_temp + ":" + ponto_text_desvio_loop;
                 ponto_text_desvio_loop = "";
                 break;
