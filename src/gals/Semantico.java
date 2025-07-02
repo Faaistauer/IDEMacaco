@@ -141,6 +141,8 @@ public class Semantico {
     private static boolean relacional = false;
     private static boolean in_relacional_loop = false;
     private static boolean isEscopo = false;
+    private static boolean chamadaSubrotina = false;
+
 
     private static void escreverTexto(String texto, boolean isDesvioLoop) {
         if(isDesvioLoop){
@@ -289,6 +291,8 @@ public class Semantico {
         String rotulo_temp2;
         String ponto_text_temp = "";
         boolean flag;
+        int tipoDestino = ERR;
+        int validacao = ERR;
 
         if (pilha_escopo.isEmpty()) {
             pilha_escopo.add(0);
@@ -376,6 +380,8 @@ public class Semantico {
                 } else {
                     chamada_nome = str;
                 }
+                calculando_indice = true;
+                chamadaSubrotina = true;
                 break;
 
             case 6:
@@ -627,7 +633,7 @@ public class Semantico {
                     }
 
                     tipoExpressao = tipoAtual;
-                    if (escrever_text) {
+                    if (escrever_text && !chamadaSubrotina) {
                         ponto_text_temp += "\nLDI " + str; // Carrega o valor imediato (literal).
                         // Se for o primeiro valor numa expressão, armazena em registrador temporário.
                         
@@ -638,11 +644,12 @@ public class Semantico {
                         else if (temp1 == true && calculando_indice == false) {
                             ponto_text_temp += "\nSTO 1000"; // Armazena o valor em R1000.
                         }
-                    } else {
+                    } else if (chamadaSubrotina) {
                         ponto_text_temp += "\nLDI " + str;
                     }
 
-                    entrando_no_indice = false; 
+                    entrando_no_indice = false;
+                    inicio_atribuicao = false;
 
                 }
                 else if (operador.equals("SOMA")) {
@@ -681,7 +688,7 @@ public class Semantico {
                     tipoExpressao = tipoResultanteDaOperacao; // Empilha o tipo resultante da operação.
 
                     // Geração de Código para a SOMA.
-                    if (escrever_text) {
+                    if (escrever_text  && !chamadaSubrotina) {
                         if (entrando_no_indice) {
                             if(era_vetor == false) ponto_text_temp += "\nSTO 1000";
                             ponto_text_temp += "\nLDI " + operando2Str; // Carrega o primeiro operando (literal)
@@ -693,7 +700,6 @@ public class Semantico {
                         else {
                             ponto_text_temp += "\nLD 1000"; // Carrega o valor do primeiro operando.
                             ponto_text_temp += "\nADDI " + operando2Str; // Adiciona o segundo operando (literal).
-                            System.out.println("calculando_indice : " + calculando_indice);
                             if(!calculando_indice) {
                                 ponto_text_temp += "\nSTO 1000"; // Armazena o resultado da soma de volta em R1000.
                             }
@@ -703,15 +709,15 @@ public class Semantico {
                         if(era_vetor == false) ponto_text_temp += "\nSTO 1000";
                         // ponto_text_temp += "\nLDI " + operando2Str; // Carrega o primeiro operando (literal)
                         temp1 = true;
-                        if (calculando_indice == true && entrando_no_indice == false) {
-                            ponto_text_temp += "\nADDI " + operando2Str;
-                            pilha_operador.pop();
-                        }
-                        else {
+                        // if (calculando_indice == true && entrando_no_indice == false) {
+                        //     ponto_text_temp += "\nADDI " + operando2Str;
+                        //     pilha_operador.pop();
+                        // }
+                        // else {
                             ponto_text_temp += "\nLD 1000"; // Carrega o valor do primeiro operando.
                             ponto_text_temp += "\nADDI " + operando2Str; // Adiciona o segundo operando (literal).
                             pilha_operador.pop();
-                        }
+                        // }
                     }
                     entrando_no_indice = false; // Reseta flag de índice.
                     // `temp1` não é resetada aqui, pois 1000 ainda contém um valor temporário (o resultado da soma).
@@ -747,7 +753,7 @@ public class Semantico {
                     tipoExpressao = tipoResultanteDaOperacao;
 
                     // Geração de Código para a SUBTRACAO.
-                    if (escrever_text) {
+                    if (escrever_text  && !chamadaSubrotina) {
                         if (entrando_no_indice) {
                             ponto_text_temp += "\nSTO 1000";
                             ponto_text_temp += "\nLDI " + operando2Str; // Carrega o primeiro operando (literal)
@@ -769,16 +775,15 @@ public class Semantico {
                         if(era_vetor == false) ponto_text_temp += "\nSTO 1000";
                         // ponto_text_temp += "\nLDI " + operando2Str; // Carrega o primeiro operando (literal)
                         temp1 = true;
-                        if (calculando_indice == true && entrando_no_indice == false) {
-                            ponto_text_temp += "\nSUBI " + operando2Str;
-                            pilha_operador.pop();
-                        }
-                        else {
+                        // if (calculando_indice == true && entrando_no_indice == false) {
+                        //     ponto_text_temp += "\nSUBI " + operando2Str;
+                        //     pilha_operador.pop();
+                        // }
+                        // else {
                             ponto_text_temp += "\nLD 1000"; // Carrega o valor do primeiro operando.
                             ponto_text_temp += "\nSUBI " + operando2Str; // Adiciona o segundo operando (literal).
-                            System.out.println("calculando_indice : " + calculando_indice);
                             pilha_operador.pop();
-                        }
+                        // }
                     }
                     entrando_no_indice = false;
 
@@ -915,7 +920,7 @@ public class Semantico {
                     } else {
                         ponto_text_war_err += "Erro semântico: Variável de destino da atribuição não encontrada na lista auxiliar.\n";
                     }
-                    int tipoDestino = stringParaTipo(varDestinoAtribuicao.tipo); // Converte para o código de tipo
+                    tipoDestino = stringParaTipo(varDestinoAtribuicao.tipo); // Converte para o código de tipo
 
                     // Obtém o tipo da expressão (resultado da subexpressão) do topo da pilha de tipos
                     if (pilha_tipos.isEmpty()) {
@@ -928,7 +933,7 @@ public class Semantico {
                     if (procura_simbolo(str) && (simbIntAux != varDestinoTipoInt)){
                         tipoExpressao = tipoDestino;
                     }
-                    int validacao = atribType(tipoDestino, tipoExpressao);
+                    validacao = atribType(tipoDestino, tipoExpressao);
 
                     if (validacao == ERR) {
                         ponto_text_war_err += "Incompatibilidade de tipos na atribuição. " +
@@ -972,8 +977,8 @@ public class Semantico {
                 Simbolo ultimoSimbolo = lista_simbolos.get(lista_simbolos.size() - 1);
                 String tipoUltimoSimbolo = ultimoSimbolo.tipo; // Tipo da variável que está recebendo a atribuição
 
-                int tipoDestino = stringParaTipo(tipoUltimoSimbolo); // Converte para o código de tipo
-                int validacao = ERR;
+                tipoDestino = stringParaTipo(tipoUltimoSimbolo); // Converte para o código de tipo
+                validacao = ERR;
 
                 if (procura_simbolo(str)){
                     tipoExpressao = tipoDestino;
@@ -1022,6 +1027,37 @@ public class Semantico {
 
             case 27:
                 simb_aux = lista_simb_aux.get(lista_simb_aux.size() - 1);
+
+                 Simbolo varDestinoAtribuicao = null;
+                    if (!lista_simb_aux.isEmpty()) {
+                        varDestinoAtribuicao = lista_simb_aux.get(lista_simb_aux.size() - 1);
+                    } else {
+                        ponto_text_war_err += "Erro semântico: Variável de destino da atribuição não encontrada na lista auxiliar.\n";
+                    }
+                    tipoDestino = stringParaTipo(varDestinoAtribuicao.tipo); // Converte para o código de tipo
+
+                    // Obtém o tipo da expressão (resultado da subexpressão) do topo da pilha de tipos
+                    if (pilha_tipos.isEmpty()) {
+                        ponto_text_war_err += "Erro semântico: Tipo da expressão a ser atribuída não encontrado na pilha de tipos.\n";
+                    }
+
+                    String simbAux = get_simbolo(str);
+                    int simbIntAux = stringParaTipo(simbAux);
+                    int varDestinoTipoInt = stringParaTipo(varDestinoAtribuicao.tipo);
+                    if (procura_simbolo(str) && (simbIntAux != varDestinoTipoInt)){
+                        tipoExpressao = tipoDestino;
+                    }
+                    validacao = atribType(tipoDestino, tipoExpressao);
+
+                    if (validacao == ERR) {
+                        ponto_text_war_err += "Incompatibilidade de tipos na atribuição. " +
+                                "Não é possível atribuir uma expressão do tipo " + nomeTipo(tipoExpressao) +
+                                " para a variável " + varDestinoAtribuicao.nome + " de tipo " + nomeTipo(tipoDestino) + ".\n";
+                    } else if (validacao == WAR) {
+                        ponto_text_war_err += "Aviso: Possível perda de dados na atribuição de uma expressão do tipo " +
+                                nomeTipo(tipoExpressao) + " para a variável " + varDestinoAtribuicao.nome +
+                                " de tipo " + nomeTipo(tipoDestino) + ".\n";
+                    }
 
                 if (temp3 == true) {
                     ponto_text_temp += "\nLD 1002";
@@ -1451,7 +1487,8 @@ public class Semantico {
                 boolean inicia_contagem = false;
                 boolean funcao_existe = false;
                 int parametros_totais = 0;
-
+                calculando_indice = false;
+                
                 ponto_text_temp += "\nCALL _" + chamada_nome;
                 for (Simbolo s : lista_simbolos) {
                     s.parametro_lido = false;
@@ -1490,7 +1527,7 @@ public class Semantico {
 
             case 57: {
                 ++conta_parm;
-                if(!escrever_text){
+                // if(escrever_text){
                     flag = false;
 
                     for (Simbolo s : lista_simbolos) {
@@ -1505,7 +1542,7 @@ public class Semantico {
                                     flag = true;
                                 }
                             }
-                }
+                // }
                 break;
             }
         }
