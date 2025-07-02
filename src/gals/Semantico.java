@@ -305,7 +305,12 @@ public class Semantico {
             case 2:
                 if (!tipo_declaracao.isEmpty()) { // verifica se foi definido o tipo do simbolo [ex: int, float, etc...]
                     simb = iniciliaza_simbolo();
-                    simb.nome = str;
+                    System.out.println("parametro_aux: " + parametro_aux);
+                    if(parametro_aux.equals("") || parametro_aux.equals("main")) {
+                        simb.nome = str;
+                    } else {
+                        simb.nome = parametro_aux + "_" + str; // adiciona o nome do parametro na frente do simbolo
+                    }
                     simb.tipo = tipo_declaracao;
                     simb.escopo = pilha_escopo.get(pilha_escopo.size() - 1);
                     insere_na_tabela(simb);
@@ -895,7 +900,6 @@ public class Semantico {
                     if (procura_simbolo(str) && (simbIntAux != varDestinoTipoInt)){
                         tipoExpressao = tipoDestino;
                     }
-
                     int validacao = atribType(tipoDestino, tipoExpressao);
 
                     if (validacao == ERR) {
@@ -1452,7 +1456,6 @@ public class Semantico {
 
                 conta_parm = 0;
                 chamada_nome = "";
-                escreverTexto(ponto_text_temp, in_relacional_loop);
                 break;
             }
 
@@ -1549,7 +1552,7 @@ public class Semantico {
         inicio_atribuicao = true;
         entrando_no_indice = false;
         ponto_data = ".data\n";
-        ponto_text = ".text\n JMP _main \n\n _main:";
+        ponto_text = ".text\n JMP _main \n\n";
         parametro_aux = "";
         chamada_nome = "";
         retorno = "";
