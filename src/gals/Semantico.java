@@ -416,6 +416,8 @@ public class Semantico {
                             if (s.vetor == true) {
                                 ponto_text_temp += "\nSTO 1002";
                                 temp3 = true;
+                            } else {
+                                temp3 = false;
                             }
                         }
                     }
@@ -835,7 +837,6 @@ public class Semantico {
                 } else if(calculando_indice == true && tipoExpressao == INT){
                     vetor_tamanho = Integer.parseInt(str);
                 }
-                    inicio_atribuicao = false;
                 break;
 
             case 21:
@@ -999,6 +1000,7 @@ public class Semantico {
                         ponto_text_temp += "\nSTOV " + simb_aux.nome;
                         temp1 = false;
                     }
+                    temp3=false;
                 } else {
                     if (temp1 == true) {
                         ponto_text_temp += "\nLD 1000";
@@ -1452,7 +1454,6 @@ public class Semantico {
 
                 conta_parm = 0;
                 chamada_nome = "";
-                escreverTexto(ponto_text_temp, in_relacional_loop);
                 break;
             }
 
