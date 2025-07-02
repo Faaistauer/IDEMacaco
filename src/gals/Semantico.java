@@ -595,7 +595,7 @@ public class Semantico {
                 } else {
                     operador = "";
                 }
-
+                System.out.println("operador: " + operador);
                 if (Objects.equals(str, ")")) {
                     break;
                 }
@@ -627,8 +627,6 @@ public class Semantico {
                     }
 
                     tipoExpressao = tipoAtual;
-
-                    System.out.println("temp1: " + temp1 + " calculando_indice: " + calculando_indice);
                     if (escrever_text) {
                         ponto_text_temp += "\nLDI " + str; // Carrega o valor imediato (literal).
                         // Se for o primeiro valor numa expressão, armazena em registrador temporário.
@@ -640,6 +638,8 @@ public class Semantico {
                         else if (temp1 == true && calculando_indice == false) {
                             ponto_text_temp += "\nSTO 1000"; // Armazena o valor em R1000.
                         }
+                    } else {
+                        ponto_text_temp += "\nLDI " + str;
                     }
 
                     entrando_no_indice = false; 
@@ -699,6 +699,19 @@ public class Semantico {
                             }
                             pilha_operador.pop();
                         }
+                    } else {
+                        if(era_vetor == false) ponto_text_temp += "\nSTO 1000";
+                        // ponto_text_temp += "\nLDI " + operando2Str; // Carrega o primeiro operando (literal)
+                        temp1 = true;
+                        if (calculando_indice == true && entrando_no_indice == false) {
+                            ponto_text_temp += "\nADDI " + operando2Str;
+                            pilha_operador.pop();
+                        }
+                        else {
+                            ponto_text_temp += "\nLD 1000"; // Carrega o valor do primeiro operando.
+                            ponto_text_temp += "\nADDI " + operando2Str; // Adiciona o segundo operando (literal).
+                            pilha_operador.pop();
+                        }
                     }
                     entrando_no_indice = false; // Reseta flag de índice.
                     // `temp1` não é resetada aqui, pois 1000 ainda contém um valor temporário (o resultado da soma).
@@ -750,6 +763,20 @@ public class Semantico {
                             if(!calculando_indice) {
                                 ponto_text_temp += "\nSTO 1000"; // Armazena o resultado da soma de volta em R1000.
                             }
+                            pilha_operador.pop();
+                        }
+                    } else {
+                        if(era_vetor == false) ponto_text_temp += "\nSTO 1000";
+                        // ponto_text_temp += "\nLDI " + operando2Str; // Carrega o primeiro operando (literal)
+                        temp1 = true;
+                        if (calculando_indice == true && entrando_no_indice == false) {
+                            ponto_text_temp += "\nSUBI " + operando2Str;
+                            pilha_operador.pop();
+                        }
+                        else {
+                            ponto_text_temp += "\nLD 1000"; // Carrega o valor do primeiro operando.
+                            ponto_text_temp += "\nSUBI " + operando2Str; // Adiciona o segundo operando (literal).
+                            System.out.println("calculando_indice : " + calculando_indice);
                             pilha_operador.pop();
                         }
                     }
@@ -1463,6 +1490,22 @@ public class Semantico {
 
             case 57: {
                 ++conta_parm;
+                if(!escrever_text){
+                    flag = false;
+
+                    for (Simbolo s : lista_simbolos) {
+                                if (flag == true && s.parametro_lido == false) {
+                                    ponto_text_temp += "\nSTO " + chamada_nome + "_" + s.nome;
+                                    s.parametro_lido = true;
+                                    temp1 = false;
+                                    break;
+                                }
+
+                                if (chamada_nome.equals(s.nome) && (s.funcao == true || s.proc == true)) {
+                                    flag = true;
+                                }
+                            }
+                }
                 break;
             }
         }
