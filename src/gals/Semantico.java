@@ -385,7 +385,7 @@ public class Semantico {
                 }
 
                 parametro_aux = str;
-                ponto_text_temp += "\n\n_" + parametro_aux;
+                ponto_text_temp += "\n\n_" + parametro_aux + ":";
                 break;
 
             case 7:
@@ -621,16 +621,13 @@ public class Semantico {
 
                     tipoExpressao = tipoAtual;
 
-                    
+                    System.out.println("temp1: " + temp1 + " calculando_indice: " + calculando_indice);
                     if (escrever_text) {
                         ponto_text_temp += "\nLDI " + str; // Carrega o valor imediato (literal).
                         // Se for o primeiro valor numa expressão, armazena em registrador temporário.
                         
                         if (temp1 == false && calculando_indice == false) {
-                            ponto_text_temp += "\nSTO 1000"; // Armazena em R1000 (registrador temporário).
-                            // if(entrando_no_indice) {
-                            //     temp1 = true; // Marca R1000 como ocupado.
-                            // }
+                            ponto_text_temp += "\nSTO 1000"; 
                             temp1 = true;
                         } 
                         else if (temp1 == true && calculando_indice == false) {
@@ -682,7 +679,6 @@ public class Semantico {
                             if(era_vetor == false) ponto_text_temp += "\nSTO 1000";
                             ponto_text_temp += "\nLDI " + operando2Str; // Carrega o primeiro operando (literal)
                             temp1 = true;
-                            inicio_atribuicao = false;
                         } else if (calculando_indice == true && entrando_no_indice == false) {
                             ponto_text_temp += "\nADDI " + operando2Str;
                             pilha_operador.pop();
@@ -736,7 +732,6 @@ public class Semantico {
                             ponto_text_temp += "\nSTO 1000";
                             ponto_text_temp += "\nLDI " + operando2Str; // Carrega o primeiro operando (literal)
                             temp1 = true;
-                            inicio_atribuicao = false;
                         } else if (calculando_indice == true && entrando_no_indice == false) {
                             ponto_text_temp += "\nSUBI " + operando2Str;
                             pilha_operador.pop();
@@ -840,6 +835,7 @@ public class Semantico {
                 } else if(calculando_indice == true && tipoExpressao == INT){
                     vetor_tamanho = Integer.parseInt(str);
                 }
+                    inicio_atribuicao = false;
                 break;
 
             case 21:
@@ -913,6 +909,7 @@ public class Semantico {
                     }
 
                     // Geração de código da atribuição usando o último símbolo como destino
+                    System.out.println("Atribuindo valor para " + varDestinoAtribuicao.nome + " é vetor: " + varDestinoAtribuicao.vetor);
                     if (entrando_no_indice) {
                         ponto_text_temp += "\nLD 1000";
 
@@ -923,6 +920,7 @@ public class Semantico {
 
                         }
                         temp1 = false; // Libera o registrador temporário R1000
+                        entrando_no_indice = false;
                     }
                     // Limpa as pilhas após a atribuição completa
                     while (!pilha_tipos.empty()) {
@@ -1026,7 +1024,7 @@ public class Semantico {
                 } else {
                     operador = "";
                 }
-
+                System.out.println("inicio_atribuicao: " + inicio_atribuicao);
                 simb_aux = lista_simb_aux.get(lista_simb_aux.size() - 1);
                 if (inicio_atribuicao == false) {
                     ponto_text_temp += "\nSTO $indr";
@@ -1155,8 +1153,9 @@ public class Semantico {
                     rotulo_temp = "";
                 }
                 rotulo_cont++;
-                ponto_text += ponto_text_desvio_loop;
-                ponto_text_desvio_loop = "";
+                // ponto_text += ponto_text_desvio_loop;
+                ponto_text += "\n\n" + rotulo_temp+":";
+                // ponto_text_desvio_loop = "";
                 in_relacional_loop = false;
                 break;
 
@@ -1184,8 +1183,9 @@ public class Semantico {
                     rotulo_temp = "";
                 }
                 ponto_text += "\nJMP " + rotulo_temp2;
-                ponto_text += "\n\n" + rotulo_temp + ":" + ponto_text_desvio_loop;
-                ponto_text_desvio_loop = "";
+                // ponto_text += "\n\n" + rotulo_temp + ":" + ponto_text_desvio_loop;
+                ponto_text += "\n\n" + rotulo_temp + ":";
+                // ponto_text_desvio_loop = "";
                 in_relacional_loop = false;
                 break;
 
@@ -1252,8 +1252,8 @@ public class Semantico {
                 pilha_rotulo.remove(pilha_rotulo.size() - 1);
 
                 ponto_text += "\nJMP " + rotulo_temp2;
-                ponto_text += "\n\n" + rotulo_temp + ":" + ponto_text_desvio_loop + "\n";
-                ponto_text_desvio_loop = "";
+                ponto_text += "\n\n" + rotulo_temp + ":";
+                // ponto_text_desvio_loop = 
                 in_relacional_loop = false;
                 break;
 
@@ -1273,7 +1273,7 @@ public class Semantico {
                 pilha_rotulo.remove(pilha_rotulo.size() - 1);
 
                 if (temp1) {
-                    ponto_text_temp += "\nLD 1000";
+                    ponto_text += "\nLD 1000";
                 }
 
                 if (operador_relacional == "MAIOR") {
@@ -1344,7 +1344,7 @@ public class Semantico {
                     temp1 = false;
                 }
                 // rotulo_cont--;
-                // in_relacional_loop = true;
+                in_relacional_loop = true;
                 isEscopo = true;
                 break;
 
@@ -1365,6 +1365,7 @@ public class Semantico {
                 ponto_text_temp += ponto_text_desvio_loop;
                 ponto_text_temp += "\nJMP " + rotulo_temp2;
                 ponto_text_temp += "\n\n" + rotulo_temp + ":";
+                ponto_text_desvio_loop = "";
                 relacional = false;
                 break;
 
@@ -1462,7 +1463,7 @@ public class Semantico {
         }
         System.out.println("ponto_text_desvio_loop: " + ponto_text_desvio_loop);
         escreverTexto(ponto_text_temp, in_relacional_loop);
-
+        if(action == 23) in_relacional_loop = false;
         System.out.println("\n------------- lista de simbolos ------------");
         for (Simbolo s : lista_simbolos) {
             System.out.println("Tipo: " + s.tipo + ", Nome: " + s.nome +
@@ -1477,7 +1478,7 @@ public class Semantico {
         }
         System.out.println("------------- Fim ------------\n");
         System.out.println("------------ codigo ------------\n");
-        System.out.println(ponto_data + "\n" + ponto_text_temp + "\n" + "HLT 0");
+        System.out.println(ponto_data + "\n" + ponto_text + "\n" + "HLT 0");
 
         // Criando o JSON com a lista de símbolos
         JSONArray jsonSimbolos = new JSONArray();
