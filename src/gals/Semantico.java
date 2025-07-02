@@ -840,9 +840,7 @@ public class Semantico {
                 } else if(calculando_indice == true && tipoExpressao == INT){
                     vetor_tamanho = Integer.parseInt(str);
                 }
-                System.out.println("temp1 antes: " + temp1);
                 break;
-
 
             case 21:
                 entrada_saida_dado = "ENTRADA";
@@ -1117,7 +1115,7 @@ public class Semantico {
 
             case 40:
                 rotulo_cont++;
-                in_relacional_loop = true;
+                // in_relacional_loop = true;
                 rotulo_temp = "R" + rotulo_cont;
                 pilha_rotulo.push(rotulo_temp);
 
@@ -1126,18 +1124,23 @@ public class Semantico {
 //                    ponto_text += "\nSUB 1001";
                 }
 
-                if (operador_relacional.equals("MAIOR")) {
+                 if (operador_relacional == "MAIOR") {
+                    ponto_text += "\nBLT "+ rotulo_temp;
+
+                }else if (operador_relacional == "MENOR") {
                     ponto_text += "\nBGT " + rotulo_temp;
-                } else if (operador_relacional.equals("MENOR")) {
-                    ponto_text += "\nBLT " + rotulo_temp;
-                } else if (operador_relacional.equals("MAIOR_IGUAL")) {
-                    ponto_text += "\nBGE " + rotulo_temp;
-                } else if (operador_relacional.equals("MENOR_IGUAL")) {
+
+                }else if (operador_relacional == "MAIOR_IGUAL") {
                     ponto_text += "\nBLE " + rotulo_temp;
-                } else if (operador_relacional.equals("IGUAL")) {
-                    ponto_text += "\nBEQ " + rotulo_temp;
-                } else if (operador_relacional.equals("DIFERENTE")) {
+
+                }else if (operador_relacional == "MENOR_IGUAL") {
+                    ponto_text += "\nBGE " + rotulo_temp;
+
+                }else if (operador_relacional == "IGUAL") {
                     ponto_text += "\nBNE " + rotulo_temp;
+
+                }else if (operador_relacional == "DIFERENTE") {
+                    ponto_text += "\nBEQ " + rotulo_temp;
                 }
                 operador_relacional = "";
                 if (temp1 == true) {
@@ -1168,16 +1171,19 @@ public class Semantico {
                 rotulo_temp2 = "R" + rotulo_cont;
                 pilha_rotulo.push(rotulo_temp2);
                 ponto_text += "\nJMP " + rotulo_temp2;
-                ponto_text += "\n\n" + rotulo_temp + ":" + ponto_text_desvio_loop;
-                ponto_text_desvio_loop = "";
+                // ponto_text += "\n\n" + rotulo_temp + ":" + ponto_text_desvio_loop;
+                ponto_text += "\n\n" + rotulo_temp + ":";
+                // ponto_text_desvio_loop = "";
                 break;
 
             case 43:
+                rotulo_temp2 = "R" + rotulo_cont;
                 if (!pilha_rotulo.isEmpty()) {
                     rotulo_temp = pilha_rotulo.pop();
                 } else {
                     rotulo_temp = "";
                 }
+                ponto_text += "\nJMP " + rotulo_temp2;
                 ponto_text += "\n\n" + rotulo_temp + ":" + ponto_text_desvio_loop;
                 ponto_text_desvio_loop = "";
                 in_relacional_loop = false;
@@ -1192,7 +1198,7 @@ public class Semantico {
 
             case 45:
                 rotulo_cont++;
-                in_relacional_loop = true;
+                // in_relacional_loop = true;
                 rotulo_temp = "R" + Integer.toString(rotulo_cont);
                 pilha_rotulo.add(rotulo_temp);
 
@@ -1201,18 +1207,28 @@ public class Semantico {
                 }
 
 
-                if (operador_relacional.equals("MAIOR")) {
-                    ponto_text += "\nBGT " + rotulo_temp;
-                } else if (operador_relacional.equals("MENOR")) {
+                if (operador_relacional == "MAIOR") {
                     ponto_text += "\nBLT " + rotulo_temp;
-                } else if (operador_relacional.equals("MAIOR_IGUAL")) {
-                    ponto_text += "\nBGE " + rotulo_temp;
-                } else if (operador_relacional.equals("MENOR_IGUAL")) {
+
+                }
+                else if (operador_relacional == "MENOR") {
+                    ponto_text += "\nBGT " + rotulo_temp;
+
+                }
+                else if (operador_relacional == "MAIOR_IGUAL") {
                     ponto_text += "\nBLE " + rotulo_temp;
-                } else if (operador_relacional.equals("IGUAL")) {
-                    ponto_text += "\nBEQ " + rotulo_temp;
-                } else if (operador_relacional.equals("DIFERENTE")) {
+
+                }
+                else if (operador_relacional == "MENOR_IGUAL") {
+                    ponto_text += "\nBGE " + rotulo_temp;
+
+                }
+                else if (operador_relacional == "IGUAL") {
                     ponto_text += "\nBNE " + rotulo_temp;
+
+                }
+                else if (operador_relacional == "DIFERENTE") {
+                    ponto_text += "\nBEQ " + rotulo_temp;
                 }
                 operador_relacional = "";
                 if (temp1) {
@@ -1260,18 +1276,27 @@ public class Semantico {
                     ponto_text_temp += "\nLD 1000";
                 }
 
-                if (operador_relacional.equals("MAIOR")) {
-                    ponto_text_temp += "\nBGT " + rotulo_temp;
-                } else if (operador_relacional.equals("MENOR")) {
-                    ponto_text_temp += "\nBLT " + rotulo_temp;
-                } else if (operador_relacional.equals("MAIOR_IGUAL")) {
-                    ponto_text_temp += "\nBGE " + rotulo_temp;
-                } else if (operador_relacional.equals("MENOR_IGUAL")) {
-                    ponto_text_temp += "\nBLE " + rotulo_temp;
-                } else if (operador_relacional.equals("IGUAL")) {
-                    ponto_text_temp += "\nBEQ " + rotulo_temp;
-                } else if (operador_relacional.equals("DIFERENTE")) {
-                    ponto_text_temp += "\nBNE " + rotulo_temp;
+                if (operador_relacional == "MAIOR") {
+                    ponto_text += "\nBGT " + rotulo_temp;
+                }
+                else if (operador_relacional == "MENOR") {
+                    ponto_text += "\nBLT " + rotulo_temp;
+
+                }
+                else if (operador_relacional == "MAIOR_IGUAL") {
+                    ponto_text += "\nBGE " + rotulo_temp;
+
+                }
+                else if (operador_relacional == "MENOR_IGUAL") {
+                    ponto_text += "\nBLE " + rotulo_temp;
+
+                }
+                else if (operador_relacional == "IGUAL") {
+                    ponto_text += "\nBEQ " + rotulo_temp;
+
+                }
+                else if (operador_relacional == "DIFERENTE") {
+                    ponto_text += "\nBNE " + rotulo_temp;
                 }
                 operador_relacional = "";
                 if (temp1) {
@@ -1296,25 +1321,30 @@ public class Semantico {
                     ponto_text += "\nLD 1000";
                 }
 
-                if (operador_relacional.equals("MAIOR")) {
-                    ponto_text += "\nBGT " + rotulo_temp;
-                } else if (operador_relacional.equals("MENOR")) {
+                if (operador_relacional == "MAIOR") {
                     ponto_text += "\nBLT " + rotulo_temp;
-                } else if (operador_relacional.equals("MAIOR_IGUAL")) {
-                    ponto_text += "\nBGE " + rotulo_temp;
-                } else if (operador_relacional.equals("MENOR_IGUAL")) {
+                }
+                else if (operador_relacional == "MENOR") {
+                    ponto_text += "\nBGT " + rotulo_temp;
+                }
+                else if (operador_relacional == "MAIOR_IGUAL") {
                     ponto_text += "\nBLE " + rotulo_temp;
-                } else if (operador_relacional.equals("IGUAL")) {
-                    ponto_text += "\nBEQ " + rotulo_temp;
-                } else if (operador_relacional.equals("DIFERENTE")) {
+                }
+                else if (operador_relacional == "MENOR_IGUAL") {
+                    ponto_text += "\nBGE " + rotulo_temp;
+                }
+                else if (operador_relacional == "IGUAL") {
                     ponto_text += "\nBNE " + rotulo_temp;
+                }
+                else if (operador_relacional == "DIFERENTE") {
+                    ponto_text += "\nBEQ " + rotulo_temp;
                 }
                 operador_relacional = "";
                 if (temp1) {
                     temp1 = false;
                 }
                 // rotulo_cont--;
-                in_relacional_loop = true;
+                // in_relacional_loop = true;
                 isEscopo = true;
                 break;
 
@@ -1332,7 +1362,6 @@ public class Semantico {
                     rotulo_temp2 = "";
                 }
                 pilha_rotulo.remove(pilha_rotulo.size() - 1);
-
                 ponto_text_temp += ponto_text_desvio_loop;
                 ponto_text_temp += "\nJMP " + rotulo_temp2;
                 ponto_text_temp += "\n\n" + rotulo_temp + ":";
@@ -1431,6 +1460,7 @@ public class Semantico {
                 break;
             }
         }
+        System.out.println("ponto_text_desvio_loop: " + ponto_text_desvio_loop);
         escreverTexto(ponto_text_temp, in_relacional_loop);
 
         System.out.println("\n------------- lista de simbolos ------------");
